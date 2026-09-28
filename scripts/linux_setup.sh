@@ -10,7 +10,7 @@
 #   sudo bash scripts/linux_setup.sh
 #   sudo bash scripts/linux_setup.sh --with-nginx
 #   sudo bash scripts/linux_setup.sh --harden
-#   DEST=/opt/nika-crm REPO_URL=https://github.com/nika-sc/Nika-Service-CRM.git sudo bash scripts/linux_setup.sh
+#   DEST=/opt/nika-crm REPO_URL=https://github.com/razlock/ProService.git sudo bash scripts/linux_setup.sh
 #   sudo bash scripts/linux_setup.sh --from-dir /path/to/already/cloned
 #
 # После установки: systemd unit nikacrm, демо-БД (если пустая), .env, печать URL и логинов.
@@ -24,7 +24,7 @@ WITH_LAN=0
 WITH_HARDEN=0
 FORCE_NGINX=0
 FROM_DIR=""
-REPO_URL="${REPO_URL:-https://github.com/nika-sc/Nika-Service-CRM.git}"
+REPO_URL="${REPO_URL:-https://github.com/razlock/ProService.git}"
 BRANCH="${BRANCH:-main}"
 DEST="${DEST:-/root/Nika-Service-CRM}"
 

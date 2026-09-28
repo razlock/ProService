@@ -38,15 +38,22 @@ HAS_USERS="$(sudo -u postgres psql -d nikacrm -Atc \
   "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name='users';" || echo 0)"
 
 if [[ "${HAS_USERS}" != "1" ]]; then
-  if [[ ! -f "$DEST/database/bootstrap/nikacrm_public_sanitized.sql" ]]; then
-    echo "Ошибка: нет файла database/bootstrap/nikacrm_public_sanitized.sql"
+  # Приоритет — свой дамп с данными (database/seed/nikacrm_data.sql).
+  # Fallback — демо-дамп разработчика.
+  if [[ -f "$DEST/database/seed/nikacrm_data.sql" ]]; then
+    SEED_FILE="$DEST/database/seed/nikacrm_data.sql"
+    echo "Импорт данных CRM: $SEED_FILE"
+  elif [[ -f "$DEST/database/bootstrap/nikacrm_public_sanitized.sql" ]]; then
+    SEED_FILE="$DEST/database/bootstrap/nikacrm_public_sanitized.sql"
+    echo "Импорт демо-дампа: $SEED_FILE"
+  else
+    echo "Ошибка: нет ни database/seed/nikacrm_data.sql, ни database/bootstrap/nikacrm_public_sanitized.sql"
     exit 1
   fi
-  # psql от пользователя postgres не читает файлы из /root (политика доступа) — копируем во /tmp
-  cp "$DEST/database/bootstrap/nikacrm_public_sanitized.sql" /tmp/nikacrm_public_sanitized.sql
-  chmod 644 /tmp/nikacrm_public_sanitized.sql
-  sudo -u postgres psql -d nikacrm -v ON_ERROR_STOP=1 -f /tmp/nikacrm_public_sanitized.sql
-  rm -f /tmp/nikacrm_public_sanitized.sql
+  cp "$SEED_FILE" /tmp/nikacrm_seed.sql
+  chmod 644 /tmp/nikacrm_seed.sql
+  sudo -u postgres psql -d nikacrm -v ON_ERROR_STOP=1 -f /tmp/nikacrm_seed.sql
+  rm -f /tmp/nikacrm_seed.sql
 fi
 
 # В OSS-репозитории каталог save/ не входит в git — выдаём права явно (аналог save/scripts/grant_app_user_after_vps_restore.sql)
@@ -100,6 +107,13 @@ MAIL_TIMEOUT=15
 EOF
 fi
 chmod 600 "$DEST/.env"
+
+# Копируем логотипы и картинки в /var/www/nikacrm/images/ (отдаются через nginx)
+if [[ -d "$DEST/static/images" ]]; then
+  mkdir -p /var/www/nikacrm/images
+  cp -r "$DEST/static/images/." /var/www/nikacrm/images/
+  echo "Логотипы скопированы в /var/www/nikacrm/images/"
+fi
 
 cd "$DEST"
 ./venv/bin/python scripts/run_migrations.py
