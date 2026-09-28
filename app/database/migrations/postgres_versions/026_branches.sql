@@ -9,11 +9,16 @@ CREATE TABLE IF NOT EXISTS branches (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Две точки по умолчанию (реальные данные пользователя)
+-- UNIQUE (name) нужен для идемпотентности ON CONFLICT DO NOTHING
+CREATE UNIQUE INDEX IF NOT EXISTS branches_ux_name ON branches (name);
+
+-- Две точки по умолчанию.
+-- ВАЖНО: если БД уже импортирована из seed-дампа, эти строки УЖЕ есть —
+-- ON CONFLICT DO NOTHING их не задублирует (благодаря UNIQUE-индексу выше).
 INSERT INTO branches (name, address, phone, color) VALUES
 ('Новый город', 'пр-кт Ульяновский, 12е', '+7 (900) 111-22-33', '#3b82f6'),
 ('Верхняя терраса', 'пр-д Сиреневый, 13б', '+7 (900) 444-55-66', '#8b5cf6')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (name) DO NOTHING;
 
 -- Привязка пользователя к точке
 ALTER TABLE users ADD COLUMN IF NOT EXISTS branch_id INTEGER REFERENCES branches(id);
