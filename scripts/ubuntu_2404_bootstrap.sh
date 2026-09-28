@@ -76,14 +76,16 @@ fi
 
 umask 077
 HOST_NAME="$(hostname -s 2>/dev/null || hostname || echo localhost)"
+PUBLIC_IP="$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null | tr -d '\n' || echo '')"
+LOCAL_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || echo '')"
 cat >"$DEST/.env" <<EOF
 SECRET_KEY=${SECRET}
 FLASK_ENV=production
 FLASK_DEBUG=False
 DB_DRIVER=postgres
 DATABASE_URL=postgresql://nikacrm:${NIKA_PASS}@127.0.0.1:5432/nikacrm
-TRUSTED_HOSTS=localhost,127.0.0.1,@private,${HOST_NAME}
-SOCKETIO_CORS_ALLOWED_ORIGINS=http://localhost:5000,http://127.0.0.1:5000,@private
+TRUSTED_HOSTS=localhost,127.0.0.1,@private,${HOST_NAME}${LOCAL_IP:+,$LOCAL_IP}${PUBLIC_IP:+,$PUBLIC_IP}
+SOCKETIO_CORS_ALLOWED_ORIGINS=http://localhost:5000,http://127.0.0.1:5000,@private${PUBLIC_IP:+,http://$PUBLIC_IP}
 RATELIMIT_STORAGE_URI=memory://
 TIMEZONE_OFFSET=3
 EOF
