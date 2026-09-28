@@ -154,6 +154,12 @@ server {
     listen [::]:80 default_server;
     server_name _;
     client_max_body_size 32m;
+    location /images/ {
+        alias /var/www/nikacrm/images/;
+        autoindex off;
+        expires 7d;
+    }
+
     location / {
         proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host \$host;
