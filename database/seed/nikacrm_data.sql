@@ -4740,7 +4740,7 @@ COPY public.diagnostics_templates (id, name, body, device_type_id, device_brand_
 --
 
 COPY public.general_settings (id, org_name, phone, address, inn, ogrn, logo_url, currency, country, updated_at, default_warranty_days, timezone_offset, mail_server, mail_port, mail_use_tls, mail_use_ssl, mail_username, mail_password, mail_default_sender, mail_timeout, close_print_mode, auto_email_order_accepted, auto_email_status_update, auto_email_order_ready, auto_email_order_closed, sms_enabled, telegram_enabled, signature_name, signature_position, director_email, auto_email_director_order_accepted, auto_email_director_order_closed, bank_name, bik, checking_account, corr_account, kpp, ogrnip, legal_address, director_title, director_name, accountant_name, signature_url, stamp_url, phone_prefix, currency_symbol) FROM stdin;
-1	Profi Service	+7 (927) 829-58-80	г. Ульяновск, проспект Ульяновский, 12е	732802001	305732817200092	http://91.209.135.93/images/ProService.png	RUB	Россия	2025-11-27 15:44:30	30	4		587	1	0				3	work_act	0	0	0	0	0	0	Demo Director	Director		1	1	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	7	₽
+1	Profi Service	+7 (927) 829-58-80	г. Ульяновск, проспект Ульяновский, 12е	732802001	305732817200092	/images/ProService.png	RUB	Россия	2025-11-27 15:44:30	30	4		587	1	0				3	work_act	0	0	0	0	0	0	Demo Director	Director		1	1	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	7	₽
 \.
 
 

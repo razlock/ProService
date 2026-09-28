@@ -54,6 +54,26 @@ if [[ "${HAS_USERS}" != "1" ]]; then
   chmod 644 /tmp/nikacrm_seed.sql
   sudo -u postgres psql -d nikacrm -v ON_ERROR_STOP=1 -f /tmp/nikacrm_seed.sql
   rm -f /tmp/nikacrm_seed.sql
+
+  # Переназначаем владельца всех объектов схемы public на nikacrm,
+  # иначе миграции упадут с "must be owner of table users"
+  echo "Переназначение владельца объектов на nikacrm..."
+  sudo -u postgres psql -d nikacrm -v ON_ERROR_STOP=1 <<'EOSQL_REASSIGN'
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN SELECT tablename FROM pg_tables WHERE schemaname='public' LOOP
+        EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' OWNER TO nikacrm';
+    END LOOP;
+    FOR r IN SELECT sequencename FROM pg_sequences WHERE schemaname='public' LOOP
+        EXECUTE 'ALTER SEQUENCE public.' || quote_ident(r.sequencename) || ' OWNER TO nikacrm';
+    END LOOP;
+    FOR r IN SELECT viewname FROM pg_views WHERE schemaname='public' LOOP
+        EXECUTE 'ALTER VIEW public.' || quote_ident(r.viewname) || ' OWNER TO nikacrm';
+    END LOOP;
+END $$;
+EOSQL_REASSIGN
 fi
 
 # В OSS-репозитории каталог save/ не входит в git — выдаём права явно (аналог save/scripts/grant_app_user_after_vps_restore.sql)
@@ -114,7 +134,10 @@ chmod 600 "$DEST/.env"
 if [[ -d "$DEST/static/images" ]]; then
   mkdir -p /var/www/nikacrm/images
   cp -r "$DEST/static/images/." /var/www/nikacrm/images/
-  echo "Логотипы скопированы в /var/www/nikacrm/images/"
+  chmod 755 /var/www/nikacrm /var/www/nikacrm/images
+  find /var/www/nikacrm/images -type d -exec chmod 755 {} \;
+  find /var/www/nikacrm/images -type f -exec chmod 644 {} \;
+  echo "Логотипы скопированы в /var/www/nikacrm/images/ (права выставлены)"
 fi
 
 cd "$DEST"
