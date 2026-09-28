@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#007bff">
+    <meta name="color-scheme" content="light dark">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Profi Service">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.svg') }}">
+    <title>{% block title %}Profi Service{% endblock %}</title>
+
+    <!-- Bootstrap 5 (локально) -->
+    <link href="{{ url_for('static', filename='cdn/bootstrap/5.3.0/css/bootstrap.min.css') }}" rel="stylesheet">
+
+    <!-- Font Awesome 7 (локально) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='cdn/font-awesome/7.0.0/css/all.min.css') }}">
+
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+
+    <!-- AdminLTE CSS (локально) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='cdn/admin-lte/3.2/css/adminlte.min.css') }}">
+
+    <!-- DataTables CSS (опционально, подключается через block) -->
+    {% block datatables_css %}{% endblock %}
+
+    <!-- Themes CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='themes.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/staff_chat.css') }}">
+
+    <!-- CSRF token for JS (fetch) -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Дополнительные стили страницы -->
+    {% block styles %}{% endblock %}
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app-chrome.css') }}">
+    <style nonce="{{ csp_nonce() }}">
+        /* Pre-hint: базовые цвета до загрузки всех CSS */
+        html.theme-dark, html.theme-dark body { background: #1a1a1a; color: #e0e0e0; }
+        html.theme-light, html.theme-light body { background: #ecf0f5; color: #333; }
+        .nika-money-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0.9em;
+            font-weight: 700;
+            font-style: normal;
+            line-height: 1;
+        }
+    </style>
+    <script src="{{ url_for('static', filename='js/app_theme_early.js') }}"></script>
+</head>
+
+<body class="hold-transition sidebar-mini">
+    <script src="{{ url_for('static', filename='js/app_theme_body.js') }}"></script>
+    <div class="wrapper">
+        <!-- Навбар -->
+        <header>
+            {% include 'partials/navbar.html' %}
+        </header>
+
+        {% if current_user.is_authenticated %}
+        {% include 'partials/mobile_nav_drawer.html' %}
+        {% endif %}
+
+        <!-- Боковая панель Bootstrap 5 -->
+        {% include 'partials/bootstrap_sidebar.html' %}
+
+        <!-- Основной контент -->
+        <div class="content-wrapper">
+            <!-- Заголовок контента -->
+            {% block content_header %}{% endblock %}
+
+            <!-- Основной контент страницы -->
+            <main class="content" role="main">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+
+        <!-- Футер -->
+        {% include 'partials/footer.html' %}
+    </div>
+
+    {% if current_user.is_authenticated and has_any_permission('view_orders', 'create_orders', 'edit_orders', 'view_finance', 'manage_finance', 'view_warehouse', 'manage_warehouse', 'manage_shop', 'salary.view') %}
+    <div class="staff-chat-panel is-hidden" id="staffChatPanel" aria-live="polite">
+        <div class="staff-chat-header">
+            <div class="staff-chat-title-row">
+                <h6 class="staff-chat-title mb-0">Чат сотрудников</h6>
+                <div class="staff-chat-header-actions">
+                    <button type="button" class="staff-chat-header-icon-btn" id="staffChatNotifyBtn" title="Уведомления браузера о новых сообщениях">🔔</button>
+                    <button type="button" class="staff-chat-header-icon-btn d-none" id="staffChatWebPushBtn" title="Web Push — уведомления, когда вкладка закрыта (нужны ключи VAPID на сервере)">📡</button>
+                    <button type="button" class="staff-chat-close" id="staffChatClose" aria-label="Закрыть">&times;</button>
+                </div>
+            </div>
+            <div class="staff-chat-identity">
+                <input type="text" class="form-control" id="staffChatActorName" maxlength="120" placeholder="Кто вы (на этом ПК)">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="staffChatSaveIdentity">Сохранить</button>
+            </div>
+        </div>
+        <div class="staff-chat-messages" id="staffChatMessages"></div>
+        <div class="staff-chat-typing" id="staffChatTyping"></div>
+        <div class="staff-chat-compose">
+            <textarea class="form-control" id="staffChatInput" maxlength="4000" placeholder="Напишите сообщение..."></textarea>
+            <div class="staff-chat-emoji-picker is-hidden" id="staffChatEmojiPicker" aria-label="Выбор эмодзи">
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="😀">😀</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="😂">😂</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="😉">😉</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="😍">😍</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="🤝">🤝</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="🙏">🙏</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="👍">👍</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="🔥">🔥</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="✅">✅</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="❗">❗</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="🚚">🚚</button>
+                <button type="button" class="staff-chat-emoji-btn" data-emoji="💸">💸</button>
+            </div>
+            <div class="staff-chat-file-list" id="staffChatFileList"></div>
+            <div class="staff-chat-upload-progress d-none" id="staffChatUploadProgressWrap">
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar" role="progressbar" style="width: 0%;" id="staffChatUploadProgressBar"></div>
+                </div>
+            </div>
+            <div class="staff-chat-limits" id="staffChatLimitsHint">Лимиты: до 8 файлов, до 20 MB на файл.</div>
+            <div class="staff-chat-actions">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="staffChatEmojiToggleBtn" title="Эмодзи">
+                        <i class="fas fa-smile me-1"></i>Эмодзи
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="staffChatAttachBtn">
+                        <i class="fas fa-paperclip me-1"></i>Файл
+                    </button>
+                    <input type="file" id="staffChatFileInput" class="d-none" multiple>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="staffChatSend">
+                    <i class="fas fa-paper-plane me-1"></i>Отправить
+                </button>
+            </div>
+        </div>
+        <div class="staff-chat-status" id="staffChatStatus"></div>
+    </div>
+    {% endif %}
+
+    {% if current_user.is_authenticated and has_any_permission('view_orders', 'create_orders', 'edit_orders') %}
+    {% include 'partials/diagnostics_modal.html' %}
+    {% endif %}
+
+    <!-- jQuery (локально) -->
+    <script src="{{ url_for('static', filename='cdn/jquery/3.6.0/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script nonce="{{ csp_nonce() }}">
+        window.NIKA_LOCALE = {
+            phonePrefix: {{ (phone_prefix or '7')|tojson }},
+            moneySymbol: {{ (money_symbol or '₽')|tojson }},
+            phonePrefixPlus: {{ (phone_prefix_plus or '+7')|tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/nika_locale.js') }}"></script>
+    <!-- Bootstrap 5 (локально) -->
+    <script src="{{ url_for('static', filename='cdn/bootstrap/5.3.0/js/bootstrap.bundle.min.js') }}"></script>
+    <!-- AdminLTE (локально) -->
+    <script src="{{ url_for('static', filename='cdn/admin-lte/3.2/js/adminlte.min.js') }}"></script>
+    <!-- Themes JS -->
+    <script src="{{ url_for('static', filename='themes.js') }}"></script>
+    <!-- Notifications JS -->
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <!-- Search JS -->
+    <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+    <!-- Socket.IO client (локально — без зависимости от внешнего CDN) -->
+    <script src="{{ url_for('static', filename='cdn/socket.io/4.7.5/socket.io.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/staff_chat.js') }}"></script>
+    {% if current_user.is_authenticated and has_any_permission('view_orders', 'create_orders', 'edit_orders') %}
+    <script src="{{ url_for('static', filename='js/order_detail/diagnostics.js') }}"></script>
+    {% endif %}
+    {% if demo_visitor_stats_enabled and current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/demo_presence.js') }}"></script>
+    {% endif %}
+    <script type="application/json" id="app-boot-config" nonce="{{ csp_nonce() }}">
+    {
+        "currentUserId": {% if current_user.is_authenticated %}{{ current_user.id }}{% else %}null{% endif %},
+        "currentUsername": {% if current_user.is_authenticated %}{{ (current_user.username or "")|tojson }}{% else %}null{% endif %},
+        "currentUserRole": {% if current_user.is_authenticated %}{{ (current_user.role or "")|tojson }}{% else %}null{% endif %},
+        "staffChatEnabled": {{ "true" if current_user.is_authenticated and has_any_permission('view_orders', 'create_orders', 'edit_orders', 'view_finance', 'manage_finance', 'view_warehouse', 'manage_warehouse', 'manage_shop', 'salary.view') else "false" }},
+        "staffChatPushSwUrl": "/staff-chat-push-sw.js",
+        "demoVisitorStatsEnabled": {{ "true" if demo_visitor_stats_enabled and current_user.is_authenticated else "false" }},
+        "demoVisitorHeartbeat": {{ "true" if demo_visitor_stats_enabled and current_user.is_authenticated else "false" }},
+        "demoVisitorPollOnline": {{ "true" if demo_visitor_stats_enabled and demo_visitor_stats_admin and current_user.is_authenticated else "false" }}
+    }
+    </script>
+    <script src="{{ url_for('static', filename='js/app_boot.js') }}"></script>
+
+    <!-- Global fetch() wrapper to include CSRF token on unsafe requests -->
+    <script src="{{ url_for('static', filename='js/app_fetch_csrf.js') }}"></script>
+
+    <!-- Скрипт для управления состоянием меню -->
+    <script src="{{ url_for('static', filename='js/app_sidebar_menu.js') }}"></script>
+
+    <!-- DataTables JS (опционально, подключается через block) -->
+    {% block datatables_js %}{% endblock %}
+
+    <!-- Дополнительные скрипты страницы -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

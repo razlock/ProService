@@ -1,0 +1,60 @@
+<!-- Шапка: бренд + поиск на всю ширину + уведомления. Разделы — в левом сайдбаре (desktop) / drawer (mobile). -->
+<nav class="mac-menu-bar no-print">
+    <div class="mac-menu-container">
+        <button type="button" class="mac-mobile-toggle" id="macMobileToggle" aria-label="Открыть меню" aria-controls="macMobileDrawer" aria-expanded="false">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="{{ url_for('main.home') }}" class="mac-menu-brand text-decoration-none" title="На главную">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Profi Service</span>
+        </a>
+
+        <div class="mac-search mac-search-box">
+            <form action="/search" method="GET" role="search" class="mac-search-form">
+                <div class="mac-search-input-wrap">
+                    <i class="fas fa-search mac-search-icon" aria-hidden="true"></i>
+                    <input type="text" name="q" class="form-control mac-search-input" id="globalSearchInput" placeholder="Поиск заявок, клиентов, товаров…" autocomplete="off" value="">
+                    <button class="btn mac-search-submit" type="submit" id="globalSearchBtn" aria-label="Искать">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </form>
+            <div class="search-autocomplete" id="searchAutocomplete" aria-label="Результаты поиска"></div>
+        </div>
+
+        <div class="mac-menu-actions">
+            {% if demo_visitor_stats_enabled and demo_visitor_stats_admin %}
+            <a href="{{ url_for('demo_visitors.demo_visitors_report') }}"
+               class="mac-action-btn demo-online-chip"
+               title="Статистика заходов демо"
+               style="gap:.35rem; width:auto; padding:0 .65rem; text-decoration:none;">
+                <i class="fas fa-circle" style="font-size:.55rem; color:#22c55e;"></i>
+                <span style="font-size:.8rem; white-space:nowrap;">Онлайн: <strong data-demo-online-count>{{ demo_online_count }}</strong></span>
+            </a>
+            {% endif %}
+            <div class="mac-notifications-dropdown">
+                <button class="mac-action-btn" id="notificationsBtn" title="Уведомления">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                </button>
+                <div class="mac-notifications-menu" id="notificationsMenu" style="display: none;">
+                    <div class="mac-notifications-header">
+                        <h6 class="mb-0">Уведомления</h6>
+                        <button class="btn btn-sm btn-link" id="markAllReadBtn" style="display: none;">Отметить все как прочитанные</button>
+                    </div>
+                    <div class="mac-notifications-body" id="notificationsList">
+                        <div class="text-center py-3 text-muted">
+                            <i class="fas fa-spinner fa-spin"></i> Загрузка...
+                        </div>
+                    </div>
+                    <div class="mac-notifications-footer">
+                        <a href="{{ url_for('main.notifications_page') }}" class="btn btn-sm btn-link w-100">Все уведомления</a>
+                    </div>
+                </div>
+            </div>
+            <a class="mac-action-btn" data-widget="fullscreen" href="#" role="button" title="Полный экран">
+                <i class="fas fa-expand-arrows-alt"></i>
+            </a>
+        </div>
+    </div>
+</nav>

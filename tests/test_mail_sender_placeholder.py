@@ -1,0 +1,136 @@
+"""Отправитель: демо noreply@example.com не должен побеждать реальный MAIL_USERNAME."""
+
+
+class _App:
+    def __init__(self, **cfg):
+        self.config = cfg
+
+
+def test_placeholder_sender_falls_back_to_username():
+    from app.services.notification_service import _resolve_sender_email
+
+    app = _App(
+        MAIL_DEFAULT_SENDER='Nika CRM Demo <noreply@example.com>',
+        MAIL_USERNAME='nika-sc@bk.ru',
+    )
+    assert _resolve_sender_email(app) == 'nika-sc@bk.ru'
+
+
+def test_real_sender_kept():
+    from app.services.notification_service import _resolve_sender_email, _resolve_message_sender
+
+    app = _App(
+        MAIL_DEFAULT_SENDER='SC <sales@bk.ru>',
+        MAIL_USERNAME='nika-sc@bk.ru',
+    )
+    assert _resolve_sender_email(app) == 'sales@bk.ru'
+    assert _resolve_message_sender(app) == 'SC <sales@bk.ru>'
+
+
+def test_message_sender_encodes_cyrillic_display_name():
+    from app.services.notification_service import _resolve_message_sender, _resolve_sender_email
+
+    app = _App(
+        MAIL_DEFAULT_SENDER='Сервисный центр Ника в Адлере на ул. Ульянова 73 <nika-sc@bk.ru>',
+        MAIL_USERNAME='nika-sc@bk.ru',
+    )
+    assert _resolve_sender_email(app) == 'nika-sc@bk.ru'
+    msg_from = _resolve_message_sender(app)
+    assert 'nika-sc@bk.ru' in msg_from
+    assert 'Ульянова' not in msg_from  # RFC2047, not raw Cyrillic in header token
+    assert msg_from.startswith('=?') or '<' in msg_from
+
+
+def test_apply_replaces_demo_sender(monkeypatch):
+    from app.services import notification_service as ns
+    import app.services.settings_service as ss
+    import app.utils.dotenv_file as dotenv_file
+
+    monkeypatch.setattr(dotenv_file, 'resolve_dotenv_path', lambda: None)
+    monkeypatch.setattr(
+        ss.SettingsService,
+        'get_general_settings',
+        staticmethod(lambda: {
+            'mail_server': 'smtp.mail.ru',
+            'mail_port': 587,
+            'mail_use_tls': True,
+            'mail_use_ssl': False,
+            'mail_username': 'nika-sc@bk.ru',
+            'mail_password': 'x',
+            'mail_default_sender': 'Nika CRM Demo <noreply@example.com>',
+            'mail_timeout': 3,
+        }),
+    )
+    app = _App(
+        MAIL_SERVER='localhost',
+        MAIL_DEFAULT_SENDER='noreply@service-center.local',
+        MAIL_USERNAME='',
+        MAIL_PASSWORD='',
+        MAIL_PORT=587,
+        MAIL_TIMEOUT=3,
+    )
+    ns._apply_mail_config_from_settings(app)
+    assert app.config['MAIL_DEFAULT_SENDER'] == 'nika-sc@bk.ru'
+    assert ns._resolve_sender_email(app) == 'nika-sc@bk.ru'
+
+
+def test_apply_does_not_fallback_empty_smtp_to_localhost(monkeypatch):
+    from app.services import notification_service as ns
+    import app.services.settings_service as ss
+    import app.utils.dotenv_file as dotenv_file
+
+    monkeypatch.setattr(dotenv_file, 'resolve_dotenv_path', lambda: None)
+    monkeypatch.setattr(
+        ss.SettingsService,
+        'get_general_settings',
+        staticmethod(lambda: {
+            'mail_server': '',
+            'mail_port': 587,
+            'mail_use_tls': True,
+            'mail_use_ssl': False,
+            'mail_username': 'a@b.ru',
+            'mail_password': 'secret',
+            'mail_default_sender': 'a@b.ru',
+            'mail_timeout': 3,
+        }),
+    )
+    monkeypatch.delenv('MAIL_SERVER', raising=False)
+    app = _App(
+        MAIL_SERVER='localhost',
+        MAIL_PORT=587,
+        MAIL_USERNAME='a@b.ru',
+        MAIL_PASSWORD='secret',
+        MAIL_DEFAULT_SENDER='a@b.ru',
+        MAIL_TIMEOUT=3,
+    )
+    ns._apply_mail_config_from_settings(app)
+    assert app.config['MAIL_SERVER'] == ''
+    assert app.config['MAIL_USE_TLS'] is True
+    assert app.config['MAIL_USE_SSL'] is False
+    assert app.config['MAIL_TIMEOUT'] >= 15
+
+
+def test_apply_forces_tls_only_on_port_587(monkeypatch):
+    from app.services import notification_service as ns
+    import app.services.settings_service as ss
+    import app.utils.dotenv_file as dotenv_file
+
+    monkeypatch.setattr(dotenv_file, 'resolve_dotenv_path', lambda: None)
+    monkeypatch.setattr(
+        ss.SettingsService,
+        'get_general_settings',
+        staticmethod(lambda: {
+            'mail_server': 'smtp.mail.ru',
+            'mail_port': 587,
+            'mail_use_tls': True,
+            'mail_use_ssl': True,  # конфликт — Flask-Mail ломается
+            'mail_username': 'a@b.ru',
+            'mail_password': 'secret',
+            'mail_default_sender': 'a@b.ru',
+            'mail_timeout': 15,
+        }),
+    )
+    app = _App()
+    ns._apply_mail_config_from_settings(app)
+    assert app.config['MAIL_USE_TLS'] is True
+    assert app.config['MAIL_USE_SSL'] is False

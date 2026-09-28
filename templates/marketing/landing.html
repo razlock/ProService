@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="author" content="Александр Смелков, СЦ Ника, Сочи">
+    <meta name="theme-color" content="#16303a">
+    <title>Бесплатная CRM для сервисных центров — Nika CRM</title>
+    <meta name="description" content="Nika CRM — бесплатная open-source CRM для сервисных центров: заявки на ремонт, склад, касса, отчёты и портал клиента. Запустите на своём сервере или попробуйте демо онлайн.">
+    <meta name="keywords" content="CRM для сервисного центра, бесплатная CRM, ремонт техники, склад запчастей, касса СЦ, open source CRM, Nika CRM, Nika Fitness CRM">
+    <link rel="canonical" href="{{ canonical_url }}/">
+    <link rel="alternate" hreflang="ru-RU" href="{{ canonical_url }}/">
+    <link rel="alternate" hreflang="ru" href="{{ canonical_url }}/">
+    <link rel="alternate" hreflang="x-default" href="{{ canonical_url }}/">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:site_name" content="Nika CRM">
+    <meta property="og:title" content="Бесплатная CRM для сервисных центров — Nika CRM">
+    <meta property="og:description" content="Заявки, склад, касса и отчёты для СЦ. Open-source, свой сервер, живое демо.">
+    <meta property="og:url" content="{{ canonical_url }}/">
+    <meta property="og:image" content="{{ og_image_url }}">
+    <meta property="og:image:secure_url" content="{{ og_image_url }}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Nika CRM — бесплатная CRM для сервисных центров">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Бесплатная CRM для сервисных центров — Nika CRM">
+    <meta name="twitter:description" content="Open-source CRM для ремонта техники: приёмка, склад, финансы. Попробуйте демо.">
+    <meta name="twitter:image" content="{{ og_image_url }}">
+    <meta name="twitter:image:alt" content="Nika CRM — бесплатная CRM для сервисных центров">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/5.3.8/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/1.13.1/font/bootstrap-icons.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/adminlte/4.2.0/css/adminlte.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='cdn/font-awesome/7.0.0/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/marketing-landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/nika-service-public.css') }}">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "Nika CRM",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Linux, Windows, Docker",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "RUB"
+          },
+          "description": "Бесплатная open-source CRM для сервисных центров: заявки на ремонт, склад, касса, отчёты и клиентский портал. Есть автономный установщик для Windows.",
+          "url": "{{ canonical_url }}/",
+          "image": "{{ og_image_url }}",
+          "downloadUrl": "{{ windows_setup.github_download_url }}",
+          "softwareVersion": "{{ windows_setup.version }}",
+          "softwareHelp": "{{ canonical_url }}/docs/guide",
+          "author": {
+            "@type": "Person",
+            "name": "Александр Смелков",
+            "email": "smelkov2008@yandex.ru"
+          }
+        },
+        {
+          "@type": "Organization",
+          "name": "Nika CRM",
+          "url": "{{ canonical_url }}/",
+          "logo": "{{ canonical_url }}{{ url_for('static', filename='favicon.svg') }}",
+          "sameAs": [
+            "{{ github_url }}",
+            "https://nika-sc.ru/",
+            "https://t.me/nikaserviceadler"
+          ],
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "nika-sc@bk.ru",
+            "availableLanguage": [
+              "ru"
+            ]
+          }
+        },
+        {
+          "@type": "WebSite",
+          "name": "Nika CRM Demo",
+          "url": "{{ canonical_url }}/",
+          "inLanguage": "ru-RU"
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": "{{ canonical_url }}/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Документация",
+              "item": "{{ canonical_url }}/docs"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Скриншоты",
+              "item": "{{ canonical_url }}/#screenshots"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Есть ли бесплатная CRM для сервисного центра?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Да. Nika CRM — бесплатная open-source система для СЦ: заявки, склад, касса и отчёты. Код открыт, можно развернуть на своём сервере без SaaS-подписки."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Подойдёт ли CRM для ремонта телефонов и бытовой техники?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Да. Система заточена под приёмку, статусы ремонта, устройства клиентов, запчасти и расчёт зарплаты мастеров — типичный сценарий сервисного центра."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Нужно ли платить за облако?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Нет обязательной облачной подписки. Вы ставите CRM локально или на свой VPS. Демо на этом сайте — для ознакомления."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Как быстро попробовать Nika CRM?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Нажмите «Войти в демо» на этой странице или скачайте автономный установщик для Windows 10/11 и поставьте CRM на свой ПК. Также можно клонировать репозиторий на GitHub и развернуть на Linux/Docker."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Есть ли версия для Windows без сервера?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Да. Доступен офлайн-установщик NikaCRM-Offline-Setup для Windows 10/11 x64. Запускайте от имени администратора: ставятся встроенные Python, PostgreSQL и демо-база. Вопросы: smelkov2008@yandex.ru и Telegram https://t.me/nikaserviceadler."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Какая база данных используется?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "PostgreSQL — основной режим для разработки и продакшена. В репозитории есть готовый sanitised-дамп для быстрого старта."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Нужен ли Redis?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "В Docker Compose Redis поднимается по умолчанию для кэша, rate limit и Socket.IO между gunicorn-воркерами. На слабом VPS Redis можно не ставить — оставьте REDIS_URL пустым, CRM стартует с in-memory кэшем."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Есть ли портал для клиентов?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Да. Клиентский портал показывает заявки, историю ремонта и устройства; пароль можно выдать при создании клиента."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+</head>
+<body class="ml-body nika-service-public layout-top-nav" data-bs-theme="dark">
+    <nav class="app-header navbar navbar-expand-lg ml-nav-adminlte" aria-label="Основная навигация">
+        <div class="container-xxl">
+            <a class="navbar-brand brand-link" href="{{ canonical_url }}/" aria-label="Nika CRM — на главную демо">
+                <span class="brand-mark">NS</span>
+                <span class="brand-copy">
+                    <span class="brand-title">Nika Service</span>
+                    <span class="brand-subtitle">Service CRM</span>
+                </span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#servicePublicNav" aria-controls="servicePublicNav" aria-expanded="false" aria-label="Меню">
+                <i class="bi bi-list fs-3" aria-hidden="true"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="servicePublicNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1 flex-wrap service-public-nav-list">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://nika-crm.ru/" rel="noopener">О CRM</a>
+                    </li>
+                    <li class="nav-item d-none d-xl-block"><a class="nav-link" href="#windows-setup">Windows</a></li>
+                    <li class="nav-item d-none d-lg-block"><a class="nav-link" href="{{ url_for('public_docs.docs_about') }}">О проекте</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('public_docs.docs_hub') }}">Руководство</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('public_blog.blog_index') }}">Блог</a></li>
+                    <li class="nav-item d-none d-xl-block">
+                        <a class="nav-link" href="{{ github_url }}" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="ml-btn ml-btn-primary btn-sm ms-lg-2" data-bs-toggle="modal" data-bs-target="#demoLoginModal">
+                            <i class="fas fa-right-to-bracket" aria-hidden="true"></i> Войти в демо
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="ml-btn ml-btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#freeInstallModal">
+                            <i class="fas fa-headset" aria-hidden="true"></i> Установка
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main id="content" tabindex="-1">
+        <section class="ml-hero ml-hero--b" aria-labelledby="hero-title">
+            <div class="ml-hero-stage">
+                <div class="ml-hero-inner">
+                    <p class="ml-brand-mark" aria-hidden="true">Nika CRM</p>
+                    <p class="ml-kicker">Open-source · свой сервер · без SaaS</p>
+                    <h1 id="hero-title">Бесплатная CRM для сервисных центров</h1>
+                    <p class="ml-lead">
+                        Nika CRM помогает принимать технику в ремонт, вести склад и кассу, считать зарплату мастеров
+                        и показывать клиенту статус заявки — на вашей инфраструктуре, без ежемесячной подписки.
+                    </p>
+                </div>
+            </div>
+            <div class="ml-hero-actions" aria-label="Действия">
+                <div class="ml-hero-actions-inner">
+                    <div class="ml-cta-row">
+                        <button type="button" class="ml-btn ml-btn-primary" data-bs-toggle="modal" data-bs-target="#demoLoginModal">
+                            <i class="fas fa-play" aria-hidden="true"></i> Войти в демо
+                        </button>
+                        <button type="button" class="ml-btn ml-btn-help" data-bs-toggle="modal" data-bs-target="#freeInstallModal">
+                            <i class="fas fa-headset" aria-hidden="true"></i> Бесплатная установка и поддержка
+                        </button>
+                    </div>
+                    <p class="ml-install-paths">
+                        Не хотите разбирать длинную инструкцию?
+                        Поставьте сами на <button type="button" class="ml-text-link" data-bs-toggle="modal" data-bs-target="#freeInstallModal">VPS с помощью автора</button>,
+                        <a href="#windows-setup">Windows SETUP</a>
+                        или по <a href="#howto">короткому сценарию</a> из README.
+                    </p>
+                    <div class="ml-cta-row ml-cta-row--equal" aria-label="Скачать и посмотреть">
+                        <a class="ml-btn ml-btn-ghost" href="{{ windows_setup.github_download_url }}" rel="noopener noreferrer">
+                            <i class="fab fa-windows" aria-hidden="true"></i>
+                            <span>Скачать для Windows</span>
+                        </a>
+                        <a class="ml-btn ml-btn-ghost" href="{{ windows_setup.demo_download_url }}" rel="noopener noreferrer">
+                            <i class="fas fa-download" aria-hidden="true"></i>
+                            <span>Зеркало на демо-сайте</span>
+                        </a>
+                        <a class="ml-btn ml-btn-ghost" href="{{ github_url }}" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-github" aria-hidden="true"></i>
+                            <span>Исходный код на GitHub</span>
+                            <span class="visually-hidden">(откроется в новой вкладке)</span>
+                        </a>
+                        <a class="ml-btn ml-btn-ghost" href="#screenshots">
+                            <i class="fas fa-images" aria-hidden="true"></i>
+                            <span>Посмотреть скриншоты</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="ml-section" id="windows-setup" aria-labelledby="windows-setup-title">
+            <h2 id="windows-setup-title">Автономная версия для Windows</h2>
+            <p class="ml-section-lead">
+                Можно поставить Nika CRM отдельно на Windows 10/11 x64 без своего Linux-сервера:
+                один EXE-установщик включает Python, PostgreSQL и демо-базу.
+            </p>
+            <div class="ml-windows-panel">
+                <div>
+                    <p class="ml-kicker">Offline SETUP {{ windows_setup.version }}</p>
+                    <h3>{{ windows_setup.filename }}</h3>
+                    <ul class="ml-windows-list">
+                        <li>Установка <strong>от имени администратора</strong> (нужны права Admin).</li>
+                        <li>Интернет для установки не требуется — полный офлайн-пакет.</li>
+                        <li>После установки откройте ярлык <strong>Nika CRM — Открыть</strong> → <code>http://127.0.0.1:5000</code>.</li>
+                        <li>После сохранения почты (SMTP) перезапустите службу ярлыком <strong>Nika CRM — Перезапуск службы</strong>.</li>
+                        <li>Перед реальной работой смените демо-пароли.</li>
+                    </ul>
+                    <div class="ml-cta-row">
+                        <a class="ml-btn ml-btn-primary" href="{{ windows_setup.github_download_url }}" rel="noopener noreferrer">
+                            <i class="fab fa-github" aria-hidden="true"></i> Скачать с GitHub
+                        </a>
+                        <a class="ml-btn ml-btn-ghost" href="{{ windows_setup.demo_download_url }}" rel="noopener noreferrer">
+                            <i class="fas fa-download" aria-hidden="true"></i> Зеркало (service.nika-crm.ru)
+                        </a>
+                        <a class="ml-btn ml-btn-ghost" href="{{ windows_setup.github_release_url }}" target="_blank" rel="noopener noreferrer">
+                            Страница релиза
+                        </a>
+                    </div>
+                    <p class="ml-windows-hash">SHA256: <code>{{ windows_setup.sha256 }}</code></p>
+                </div>
+                <div class="ml-windows-creds" role="region" aria-label="Демо-логины Windows SETUP">
+                    <h3>Логины после установки</h3>
+                    <p>Пароль для всех тестовых пользователей: <code>111111</code></p>
+                    <ul>
+                        <li><code>admin</code> — полный доступ</li>
+                        <li><code>manager</code> — менеджер</li>
+                        <li><code>master</code> — мастер</li>
+                        <li><code>viewer</code> — только просмотр</li>
+                    </ul>
+                    <h3>Вопросы по установке</h3>
+                    <p>
+                        Александр Смелков, СЦ «Ника», Сочи<br>
+                        Email:
+                        <a href="mailto:smelkov2008@yandex.ru">smelkov2008@yandex.ru</a>,
+                        <a href="mailto:nika-sc@bk.ru?subject=Nika-CRM%20%D0%9F%D0%BE%D0%BC%D0%BE%D1%89%D1%8C%20%D0%BF%D0%BE%20%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B5">nika-sc@bk.ru</a><br>
+                        Telegram-канал:
+                        <a href="https://t.me/nikaserviceadler" target="_blank" rel="noopener noreferrer">t.me/nikaserviceadler <span class="visually-hidden">(откроется в новой вкладке)</span></a>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="ml-section" id="for-whom" aria-labelledby="for-whom-title">
+            <h2 id="for-whom-title">Для кого эта CRM</h2>
+            <p class="ml-section-lead">
+                Если у вас сервисный центр, мастерская по ремонту телефонов, ноутбуков или бытовой техники —
+                вам нужна система именно под приёмку и выдачу, а не «продажи вообще».
+            </p>
+            <div class="ml-grid ml-grid-3">
+                <article class="ml-feature">
+                    <i class="fas fa-store fa-lg" aria-hidden="true"></i>
+                    <h3>Сервисные центры</h3>
+                    <p>Реестр заявок, канбан, статусы ремонта, история устройства и клиента в одном месте.</p>
+                </article>
+                <article class="ml-feature">
+                    <i class="fas fa-screwdriver-wrench fa-lg" aria-hidden="true"></i>
+                    <h3>Мастерские и точки приёма</h3>
+                    <p>Быстрое создание заявки (частые справочники), квитанция при сохранении, уведомления клиенту.</p>
+                </article>
+                <article class="ml-feature">
+                    <i class="fas fa-user-tie fa-lg" aria-hidden="true"></i>
+                    <h3>Владельцы СЦ</h3>
+                    <p>Отчёты по выручке, марже, складу и зарплате — без привязки к чужому облаку.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="ml-section" id="features" aria-labelledby="features-title">
+            <h2 id="features-title">Возможности</h2>
+            <p class="ml-section-lead">
+                Практичный набор модулей, который уже используется в реальном сервисном центре «Ника» (Сочи).
+            </p>
+            <div class="ml-grid ml-grid-2">
+                <article class="ml-feature">
+                    <h3><i class="fas fa-clipboard-list me-2" aria-hidden="true"></i>Заявки на ремонт</h3>
+                    <p>Создание, фильтры, закрепление, журнал и канбан. Динамические статусы с флагами оплаты и зарплаты.</p>
+                </article>
+                <article class="ml-feature">
+                    <h3><i class="fas fa-boxes-stacked me-2" aria-hidden="true"></i>Склад и запчасти</h3>
+                    <p>Остатки, категории, поставщики, движения и low-stock уведомления.</p>
+                </article>
+                <article class="ml-feature">
+                    <h3><i class="fas fa-wallet me-2" aria-hidden="true"></i>Касса и финансы</h3>
+                    <p>Оплаты, кошелёк клиента, кассовые проводки и отчёт по прибыльности.</p>
+                </article>
+                <article class="ml-feature">
+                    <h3><i class="fas fa-chart-line me-2" aria-hidden="true"></i>Отчёты владельца</h3>
+                    <p>Дашборд дня, продажи, закупки, маржа, остатки и зарплата мастеров.</p>
+                </article>
+                <article class="ml-feature">
+                    <h3><i class="fas fa-mobile-screen me-2" aria-hidden="true"></i>Портал клиента</h3>
+                    <p>Клиент видит заявки, историю ремонта, устройства и профиль; пароль можно выдать при создании карточки.</p>
+                </article>
+                <article class="ml-feature">
+                    <h3><i class="fas fa-comments me-2" aria-hidden="true"></i>Чат сотрудников</h3>
+                    <p>Внутренний чат с уведомлениями — чтобы смена не теряла контекст по заявкам.</p>
+                </article>
+                <article class="ml-feature">
+                    <h3><i class="fas fa-file-invoice-dollar me-2" aria-hidden="true"></i>Счета для юрлиц и ИП</h3>
+                    <p>
+                        Реестр счетов, печать счёта, акта и накладной (A4), оплата с заявкой или через магазин.
+                        <a href="{{ url_for('public_blog.blog_post', slug='invoices-print-ux') }}">Подробнее в блоге</a>
+                        · <a href="{{ url_for('public_docs.docs_guide') }}">руководство §&nbsp;10</a>.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <section class="ml-section" id="documentation" aria-labelledby="documentation-title">
+            <h2 id="documentation-title">Руководство прямо на демо</h2>
+            <p class="ml-section-lead">
+                Читайте инструкции и смотрите скриншоты здесь — без перехода в GitHub.
+                Откройте сценарий рабочего дня или полное руководство пользователя.
+            </p>
+
+            <div class="ml-docs-panel">
+                <div>
+                    <p class="ml-kicker">Начните отсюда</p>
+                    <h3>Сценарий рабочего дня со скриншотами</h3>
+                    <p>
+                        Вход → заявка → услуги и товары → оплата → закрытие → зарплата → касса.
+                        Реальные экраны демо-CRM.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="ml-btn ml-btn-primary" href="{{ url_for('public_docs.docs_walkthrough') }}">
+                            <i class="fas fa-route" aria-hidden="true"></i> Сценарий дня
+                        </a>
+                        <a class="ml-btn ml-btn-ghost" href="{{ url_for('public_docs.docs_guide') }}">
+                            <i class="fas fa-book-open" aria-hidden="true"></i> Полное руководство
+                        </a>
+                        <a class="ml-btn ml-btn-ghost" href="{{ url_for('public_docs.docs_about') }}">
+                            <i class="fas fa-download" aria-hidden="true"></i> Установка
+                        </a>
+                    </div>
+                </div>
+                <dl class="ml-system-facts">
+                    <div><dt>Лицензия</dt><dd>MIT, бесплатно и open-source</dd></div>
+                    <div><dt>База данных</dt><dd>PostgreSQL</dd></div>
+                    <div><dt>Кэш и realtime</dt><dd>Redis (кэш, rate limit, Socket.IO между воркерами)</dd></div>
+                    <div><dt>Стек</dt><dd>Python, Flask, Jinja2, gunicorn, nginx</dd></div>
+                    <div><dt>Развёртывание</dt><dd>Windows, Docker Compose, локальная сеть или VPS</dd></div>
+                    <div><dt>Данные</dt><dd>Хранятся на вашей инфраструктуре</dd></div>
+                    <div><dt>Автор</dt><dd>Александр Смелков, СЦ «Ника», Сочи</dd></div>
+                </dl>
+            </div>
+
+            <div class="ml-doc-list" aria-label="Документация на демо">
+                <a href="{{ url_for('public_docs.docs_hub') }}">Все разделы документации</a>
+                <a href="{{ url_for('public_blog.blog_index') }}">Блог обновлений</a>
+                <a href="{{ url_for('public_docs.docs_walkthrough') }}">Сценарий рабочего дня</a>
+                <a href="{{ url_for('public_docs.docs_guide') }}">Руководство пользователя</a>
+                <a href="{{ url_for('public_docs.docs_about') }}">О проекте и установка</a>
+                <a href="{{ github_url }}/blob/main/docs/API.md" target="_blank" rel="noopener noreferrer">API (GitHub) <span class="visually-hidden">(откроется в новой вкладке)</span></a>
+            </div>
+        </section>
+
+        <section class="ml-section" id="screenshots" aria-labelledby="screenshots-title">
+            <h2 id="screenshots-title">Скриншоты интерфейса CRM</h2>
+            <p class="ml-section-lead">
+                Реальные экраны системы: заявки, карточки, отчёты, склад, реестр и рабочие сценарии сервисного центра.
+            </p>
+            <div class="ml-shot-grid">
+                {% for shot in screenshot_files %}
+                <button
+                    type="button"
+                    class="ml-shot-card"
+                    data-shot-index="{{ loop.index0 }}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#shotCarouselModal"
+                    aria-label="Открыть скриншот: {{ shot.title }}"
+                >
+                    <img
+                        src="{{ url_for('static', filename=shot.file) }}"
+                        alt="{{ shot.title }}"
+                        loading="lazy"
+                        decoding="async"
+                    >
+                    <span aria-hidden="true">{{ shot.title }}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="ml-section" id="open-source" aria-labelledby="oss-title">
+            <h2 id="oss-title">Почему бесплатно и open-source</h2>
+            <p class="ml-section-lead">
+                Код публикуется как практическое решение для СЦ: вы владеете данными и сервером.
+                Нет обязательной SaaS-подписки — платите только за свой хостинг, если выносите CRM в интернет.
+            </p>
+            <div class="ml-grid ml-grid-3">
+                <article class="ml-feature">
+                    <h3>Свой сервер</h3>
+                    <p>Локальная сеть или VPS с доменом. Данные не уходят в чужой мультитенант.</p>
+                </article>
+                <article class="ml-feature">
+                    <h3>Прозрачный код</h3>
+                    <p>Репозиторий на GitHub: можно читать, аудировать и дорабатывать под свой процесс.</p>
+                </article>
+                <article class="ml-feature">
+                    <h3>Демо без риска</h3>
+                    <p>Этот сайт — ознакомительная среда. Для продакшена поднимаете свою копию.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="ml-section" id="howto" aria-labelledby="howto-title">
+            <h2 id="howto-title">Как запустить свою копию</h2>
+            <p class="ml-section-lead">
+                Короткий путь. Если длинный README пугает —
+                <button type="button" class="ml-text-link" data-bs-toggle="modal" data-bs-target="#freeInstallModal">бесплатная установка на VPS</button>
+                через партнёра {{ vps_referral.label }}, либо
+                <a href="#windows-setup">Windows SETUP</a>.
+                Подробности — в README
+                <a href="{{ github_url }}" target="_blank" rel="noopener noreferrer">nika-sc/Nika-Service-CRM <span class="visually-hidden">(откроется в новой вкладке)</span></a>.
+            </p>
+            <ol class="ml-steps">
+                <li>Клонируйте репозиторий и создайте виртуальное окружение Python.</li>
+                <li>Поднимите PostgreSQL и импортируйте демо-дамп <code>database/bootstrap/nikacrm_public_sanitized.sql</code>.</li>
+                <li>Скопируйте <code>.env.example</code> → <code>.env</code>, укажите <code>DB_DRIVER=postgres</code> и <code>DATABASE_URL</code>.</li>
+                <li>Для Docker: <code>docker compose up -d</code> — web, nginx, Postgres и Redis; статика отдаётся nginx. Без Redis (малый VPS) задайте пустой <code>REDIS_URL</code> — CRM стартует на in-memory кэше.</li>
+                <li>Либо <code>python run.py</code> / bootstrap-скрипт Ubuntu 24.04 (<code>scripts/linux_setup.sh</code>).</li>
+            </ol>
+        </section>
+
+        <section class="ml-section ml-faq" id="faq" aria-labelledby="faq-title">
+            <h2 id="faq-title">Частые вопросы</h2>
+            <p class="ml-section-lead">Ответы на типовые запросы про бесплатную CRM для сервисных центров.</p>
+
+            <details>
+                <summary>Есть ли бесплатная CRM для сервисного центра?</summary>
+                <p>Да. Nika CRM распространяется как open-source: заявки, склад, касса и отчёты без обязательной облачной подписки.</p>
+            </details>
+            <details>
+                <summary>Подойдёт ли для ремонта телефонов и ноутбуков?</summary>
+                <p>Да. Сценарии приёмки, статусов ремонта, учёта устройств и запчастей — основа системы.</p>
+            </details>
+            <details>
+                <summary>Чем отличается от «облачных» CRM?</summary>
+                <p>Вы ставите ПО у себя. Нет ежемесячной платы за SaaS; ответственность за сервер и бэкапы — на вас (или на вашем хостере).</p>
+            </details>
+            <details>
+                <summary>Как посмотреть демо прямо сейчас?</summary>
+                <p>Нажмите «Войти в демо» — откроется окно входа. Учётка и подсказки показаны в модалке, если демо-баннер включён.</p>
+            </details>
+            <details>
+                <summary>Есть ли установщик для Windows?</summary>
+                <p>
+                    Да — автономный <a href="#windows-setup">Offline SETUP</a> для Windows 10/11 x64.
+                    Запускайте <strong>от имени администратора</strong>.
+                    Скачать:
+                    <a href="{{ windows_setup.github_download_url }}">GitHub</a>
+                    или
+                    <a href="{{ windows_setup.demo_download_url }}">зеркало на этом сайте</a>.
+                </p>
+            </details>
+            <details>
+                <summary>Какая СУБД нужна?</summary>
+                <p>PostgreSQL. В репозитории есть готовый sanitised-дамп для быстрого старта и скрипт установки на Ubuntu 24.04. Windows SETUP ставит PostgreSQL автоматически.</p>
+            </details>
+            <details>
+                <summary>Нужен ли Redis?</summary>
+                <p>
+                    В Docker Compose Redis поднимается по умолчанию: общий кэш, лимиты API и события Socket.IO между несколькими gunicorn-воркерами.
+                    На слабом VPS (~1&nbsp;ГБ) Redis можно не ставить — оставьте <code>REDIS_URL</code> пустым, приложение работает с in-memory кэшем.
+                    Подробности — в README,
+                    <a href="{{ url_for('public_blog.blog_post', slug='perf-cash-mobile') }}">посте про производительность</a>,
+                    в <a href="{{ url_for('public_blog.blog_post', slug='all-orders-light') }}">лёгком реестре заявок</a>,
+                    в <a href="{{ url_for('public_blog.blog_post', slug='salary-reports-speed') }}">ускорении Зарплаты и Отчётов</a>,
+                    в <a href="{{ url_for('public_blog.blog_post', slug='client-detail-reports-size') }}">карточке клиента и отчётах</a>,
+                    в <a href="{{ url_for('public_blog.blog_post', slug='nav-hang-settings') }}">багфиксе зависания меню</a>,
+                    в <a href="{{ url_for('public_blog.blog_post', slug='perf-salary-cash-settings') }}">ускорении Кассы/ЗП/Настроек</a>,
+                    в <a href="{{ url_for('public_blog.blog_post', slug='bugfixes-cache-salary') }}">багфиксах Redis и зарплаты</a>
+                    и в заметке про <a href="{{ url_for('public_blog.blog_post', slug='salary-refund-split') }}">ЗП и возвраты оплат</a>.
+                </p>
+            </details>
+            <details>
+                <summary>Есть ли клиентский портал?</summary>
+                <p>Да. Клиент смотрит заявки, историю ремонта и устройства; доступ выдаётся из карточки клиента.</p>
+            </details>
+            <details>
+                <summary>Кто автор и куда писать по установке?</summary>
+                <p>
+                    Александр Смелков, СЦ «Ника», Сочи.<br>
+                    Email:
+                    <a href="mailto:smelkov2008@yandex.ru">smelkov2008@yandex.ru</a>,
+                    <a href="mailto:nika-sc@bk.ru?subject=Nika-CRM%20%D0%9F%D0%BE%D0%BC%D0%BE%D1%89%D1%8C%20%D0%BF%D0%BE%20%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B5">nika-sc@bk.ru</a>
+                    (тема: «Nika-CRM Помощь по установке»).<br>
+                    Telegram-канал:
+                    <a href="https://t.me/nikaserviceadler" target="_blank" rel="noopener noreferrer">t.me/nikaserviceadler <span class="visually-hidden">(откроется в новой вкладке)</span></a>.
+                </p>
+            </details>
+        </section>
+    </main>
+
+    <footer class="ml-footer">
+        <div class="ml-footer-brand">Nika CRM</div>
+        <p>
+            Бесплатная CRM для сервисных центров ·
+            <a href="{{ github_url }}" target="_blank" rel="noopener noreferrer">GitHub <span class="visually-hidden">(откроется в новой вкладке)</span></a>
+            {% if demo_login and demo_login.vps_url %}
+            · <a href="{{ demo_login.vps_url }}" target="_blank" rel="noopener noreferrer">VPS {{ demo_login.vps_label }} <span class="visually-hidden">(откроется в новой вкладке)</span></a>
+            {% endif %}
+            · <a href="{{ url_for('public_docs.docs_hub') }}">Руководство</a>
+            · <a href="{{ url_for('public_blog.blog_index') }}">Блог</a>
+            · <button type="button" class="ml-text-link" data-bs-toggle="modal" data-bs-target="#freeInstallModal">Бесплатная установка</button>
+            · <a href="{{ windows_setup.github_download_url }}">Windows SETUP</a>
+            · <a href="mailto:smelkov2008@yandex.ru">smelkov2008@yandex.ru</a>
+            · <a href="mailto:nika-sc@bk.ru">nika-sc@bk.ru</a>
+            · <a href="https://t.me/nikaserviceadler" target="_blank" rel="noopener noreferrer">Telegram <span class="visually-hidden">(откроется в новой вкладке)</span></a>
+        </p>
+        <p>© 2026 Александр Смелков, сервисный центр «Ника», Сочи</p>
+    </footer>
+
+    <div class="modal fade ml-shot-modal" id="shotCarouselModal" tabindex="-1" aria-labelledby="shotCarouselTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-6" id="shotCarouselTitle">Скриншот</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <img id="shotCarouselImage" src="" alt="" loading="eager" decoding="sync">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-light" id="shotPrevBtn" aria-label="Предыдущий скриншот">
+                        <i class="fas fa-arrow-left me-1" aria-hidden="true"></i> Назад
+                    </button>
+                    <button type="button" class="btn btn-outline-light" id="shotNextBtn" aria-label="Следующий скриншот">
+                        Вперёд <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" aria-label="Закрыть просмотр скриншотов">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade ml-modal" id="freeInstallModal" tabindex="-1" aria-labelledby="freeInstallModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="freeInstallModalLabel">Бесплатная установка и поддержка</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">
+                        Не хотите разбираться с длинной инструкцией? Есть три пути:
+                    </p>
+                    <ol class="ml-install-options">
+                        <li>
+                            <strong>VPS + помощь автора (бесплатно).</strong>
+                            Купите сервер у партнёра <strong>{{ vps_referral.label }}</strong> по реферальной ссылке
+                            и промокоду — автор проекта бесплатно установит Nika CRM и поможет с запуском/поддержкой.
+                            По запросу помогу и с <strong>переносом данных из другой CRM</strong>
+                            (клиенты, заявки, остатки — формат выгрузки согласуем).
+                        </li>
+                        <li>
+                            <strong>Windows SETUP.</strong>
+                            Автономный установщик на ваш ПК — без Linux-сервера.
+                            <a href="#windows-setup" data-bs-dismiss="modal">Подробнее ниже</a>.
+                        </li>
+                        <li>
+                            <strong>Самостоятельно.</strong>
+                            Клонируйте репозиторий и поставьте по README / Docker / Ubuntu-скрипту.
+                        </li>
+                    </ol>
+
+                    <div class="ml-vps-offer" id="firstvds-help">
+                        <p class="ml-kicker">VPS-хостинг {{ vps_referral.label }}</p>
+                        <h3 class="h5">Реферал и бесплатная помощь с запуском</h3>
+                        <ul>
+                            <li>
+                                Реферальная ссылка:
+                                <a href="{{ vps_referral.url }}" target="_blank" rel="noopener noreferrer">{{ vps_referral.url }} <span class="visually-hidden">(откроется в новой вкладке)</span></a>
+                            </li>
+                            <li>Промокод на скидку: <code class="ml-promo-code">{{ vps_referral.promo }}</code></li>
+                        </ul>
+                        <p>
+                            После заказа сервера напишите
+                            <a href="{{ vps_referral.mailto }}">{{ vps_referral.email }}</a>
+                            с темой <strong>«Nika-CRM Помощь по установке»</strong>
+                            и укажите, что сервер куплен через реферал {{ vps_referral.label }}.
+                            Если нужно перенести базу из другой CRM — напишите об этом в том же письме.
+                            Автор — {{ vps_referral.author }}, СЦ «Ника», Сочи.
+                        </p>
+                        <div class="ml-cta-row mt-3">
+                            <a class="ml-btn ml-btn-help" href="{{ vps_referral.url }}" target="_blank" rel="noopener noreferrer">
+                                Заказать VPS у {{ vps_referral.label }}
+                                <span class="visually-hidden">(откроется в новой вкладке)</span>
+                            </a>
+                            <a class="ml-btn ml-btn-ghost" href="{{ vps_referral.mailto }}">Написать на почту</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade ml-modal" id="demoLoginModal" tabindex="-1" aria-labelledby="demoLoginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="demoLoginModalLabel">Вход в демо Nika CRM</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('main.login') }}" id="demoLoginForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="from_landing" value="1">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Имя пользователя</label>
+                            <input type="text" class="form-control" id="username" name="username" required autocomplete="username"
+                                   {% if demo_login %}value="{{ demo_login.username }}"{% endif %}>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="password" name="password" required autocomplete="current-password"
+                                   {% if demo_login %}value="{{ demo_login.password }}"{% endif %}>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me" value="1">
+                            <label class="form-check-label" for="remember_me">Запомнить меня</label>
+                        </div>
+                        <button type="submit" class="ml-btn ml-btn-primary w-100 justify-content-center">
+                            <i class="fas fa-right-to-bracket" aria-hidden="true"></i> Войти
+                        </button>
+                    </form>
+
+                    {% if demo_login %}
+                    <div class="ml-demo-hint" role="region" aria-label="Демо-доступ">
+                        <strong>Онлайн-демо:</strong>
+                        логин <code>{{ demo_login.username }}</code>,
+                        пароль <code>{{ demo_login.password }}</code>
+                        {% if demo_login.count_orders is not none %}
+                        · заявок в базе: <strong>{{ demo_login.count_orders }}</strong>
+                        {% endif %}
+                        <div class="mt-2">
+                            <strong>OSS и Windows SETUP (пароль <code>111111</code>):</strong>
+                        </div>
+                        <div class="mt-1">
+                            <code>admin</code> — полный доступ ·
+                            <code>manager</code> — менеджер ·
+                            <code>master</code> — мастер ·
+                            <code>viewer</code> — просмотр
+                        </div>
+                        <div class="mt-2">
+                            <strong>Windows Offline SETUP:</strong>
+                            установка <strong>от имени администратора</strong>.
+                            <a href="{{ windows_setup.github_download_url }}">Скачать с GitHub</a>
+                            ·
+                            <a href="{{ windows_setup.demo_download_url }}">зеркало</a>
+                            ·
+                            <a href="#windows-setup" data-bs-dismiss="modal">подробнее</a>
+                        </div>
+                        <div class="mt-2">
+                            Вопросы:
+                            <a href="mailto:smelkov2008@yandex.ru">smelkov2008@yandex.ru</a>,
+                            <a href="mailto:nika-sc@bk.ru?subject=Nika-CRM%20%D0%9F%D0%BE%D0%BC%D0%BE%D1%89%D1%8C%20%D0%BF%D0%BE%20%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B5">nika-sc@bk.ru</a>,
+                            <a href="https://t.me/nikaserviceadler" target="_blank" rel="noopener noreferrer">Telegram <span class="visually-hidden">(откроется в новой вкладке)</span></a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='vendor/bootstrap/5.3.8/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/adminlte/4.2.0/js/adminlte.min.js') }}"></script>
+    <script>
+    (function () {
+        var shots = {{ screenshot_files | tojson }};
+        var shotModalEl = document.getElementById('shotCarouselModal');
+        var shotTitleEl = document.getElementById('shotCarouselTitle');
+        var shotImageEl = document.getElementById('shotCarouselImage');
+        var prevBtn = document.getElementById('shotPrevBtn');
+        var nextBtn = document.getElementById('shotNextBtn');
+        var currentIndex = 0;
+
+        function renderShot(index) {
+            if (!shots.length) return;
+            var len = shots.length;
+            currentIndex = ((index % len) + len) % len;
+            var shot = shots[currentIndex];
+            var src = "{{ url_for('static', filename='') }}" + shot.file;
+            shotTitleEl.textContent = shot.title + " (" + (currentIndex + 1) + " / " + len + ")";
+            shotImageEl.src = src;
+            shotImageEl.alt = shot.title;
+        }
+
+        if (shotModalEl && window.bootstrap) {
+            shotModalEl.addEventListener('show.bs.modal', function (event) {
+                var trigger = event.relatedTarget;
+                var idx = 0;
+                if (trigger && trigger.dataset && trigger.dataset.shotIndex) {
+                    idx = parseInt(trigger.dataset.shotIndex, 10) || 0;
+                }
+                renderShot(idx);
+            });
+
+            prevBtn.addEventListener('click', function () {
+                renderShot(currentIndex - 1);
+            });
+            nextBtn.addEventListener('click', function () {
+                renderShot(currentIndex + 1);
+            });
+
+            shotModalEl.addEventListener('keydown', function (event) {
+                if (event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    renderShot(currentIndex - 1);
+                } else if (event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    renderShot(currentIndex + 1);
+                }
+            });
+        }
+
+        var shouldOpen = {{ 'true' if open_login else 'false' }};
+        if (!shouldOpen) return;
+        var el = document.getElementById('demoLoginModal');
+        if (!el || !window.bootstrap) return;
+        var modal = bootstrap.Modal.getOrCreateInstance(el);
+        modal.show();
+        var user = document.getElementById('username');
+        if (user) user.focus();
+    })();
+    </script>
+</body>
+</html>

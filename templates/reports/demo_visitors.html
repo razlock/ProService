@@ -1,0 +1,236 @@
+{% extends "reports/_layout.html" %}
+
+{% block title %}Демо: посещения — Profi Service{% endblock %}
+
+{% block report_content %}
+<div class="mb-3 d-flex flex-wrap justify-content-between align-items-start gap-2">
+    <div>
+        <h2 class="h4 mb-1"><i class="fas fa-users me-2"></i>Статистика заходов (демо)</h2>
+        <p class="text-muted small mb-0">
+            Только для admin на демо-сервере. «Онлайн» — сейчас ({{ stats.online_window_minutes }} мин),
+            KPI и график — за период <strong>{{ stats.period_label }}</strong>
+            ({{ stats.date_from }}{% if stats.date_from != stats.date_to %} — {{ stats.date_to }}{% endif %}).
+            {% if stats.as_of %}<span class="ms-1">Обновлено: {{ stats.as_of }}</span>{% endif %}
+        </p>
+    </div>
+</div>
+
+<form class="card card-body mb-4" method="get" action="{{ url_for('demo_visitors.demo_visitors_report') }}">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small mb-1">Период</label>
+            <select name="period" id="demoPeriod" class="form-select form-select-sm" onchange="toggleCustomDates()">
+                {% for value, label in period_choices %}
+                <option value="{{ value }}" {% if stats.period == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 demo-custom-dates" {% if stats.period != 'custom' %}style="display:none"{% endif %}>
+            <label class="form-label small mb-1">С</label>
+            <input type="date" name="from" class="form-control form-control-sm" value="{{ stats.date_from }}">
+        </div>
+        <div class="col-md-3 demo-custom-dates" {% if stats.period != 'custom' %}style="display:none"{% endif %}>
+            <label class="form-label small mb-1">По</label>
+            <input type="date" name="to" class="form-control form-control-sm" value="{{ stats.date_to }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-sm btn-primary w-100">Показать</button>
+        </div>
+    </div>
+    <div class="form-text mt-2">Данные хранятся {{ stats.retention_days }} дней; произвольный период ограничен этим окном.</div>
+</form>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Сейчас онлайн</div>
+                <div class="fs-3 fw-semibold" id="demoOnlineNow">{{ stats.online }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Логинов за период</div>
+                <div class="fs-3 fw-semibold">{{ stats.logins_today }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Уник. логинов / сессий</div>
+                <div class="fs-3 fw-semibold">{{ stats.unique_users_today }} / {{ stats.unique_sessions_today }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Уник. IP за период</div>
+                <div class="fs-3 fw-semibold">{{ stats.unique_ips_today }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+<p class="small text-muted mb-4">
+    «Онлайн» и «сессии» считаются по браузеру (client_instance_id / отпечаток IP+UA), а не по одному логину.
+    Один <code>demo_admin</code> в Chrome и Firefox = 2 онлайн. Окно: {{ stats.online_window_minutes }} мин.
+</p>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><strong>Сейчас в CRM</strong></div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Логин</th>
+                                <th>IP</th>
+                                <th>Браузер</th>
+                                <th>Страница</th>
+                                <th>Был</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in online_users %}
+                            <tr>
+                                <td>{{ u.username or '—' }}</td>
+                                <td><code>{{ u.ip or '—' }}</code></td>
+                                <td class="small text-truncate" style="max-width:10rem" title="{{ u.browser or '' }}">{{ u.browser or '—' }}</td>
+                                <td class="small text-truncate" style="max-width:10rem" title="{{ u.path or '' }}">{{ u.path or '—' }}</td>
+                                <td class="small text-nowrap">{{ u.last_seen or '—' }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-muted text-center py-3">Никого онлайн</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <strong>
+                    {% if stats.chart_mode == 'day' %}Активность по дням{% else %}Активность по часам{% endif %}
+                    ({{ stats.period_label }})
+                </strong>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-end gap-1" style="height:140px">
+                    {% if stats.chart_mode == 'day' %}
+                        {% set bars = stats.by_day %}
+                        {% set counts = bars|map(attribute='count')|list %}
+                        {% set max_h = (counts|max) if counts else 1 %}
+                        {% if max_h < 1 %}{% set max_h = 1 %}{% endif %}
+                        {% for h in bars %}
+                        <div class="flex-fill text-center" title="{{ h.day }} — {{ h.count }}">
+                            <div class="bg-primary rounded-top mx-auto"
+                                 style="height: {{ ((h.count / max_h) * 120)|int }}px; min-height: {% if h.count %}2px{% else %}0{% endif %}; width: 70%; opacity: .85;"></div>
+                            <div class="small text-muted" style="font-size:.6rem">{{ h.day[5:] }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        {% set counts = stats.by_hour|map(attribute='count')|list %}
+                        {% set max_h = (counts|max) if counts else 1 %}
+                        {% if max_h < 1 %}{% set max_h = 1 %}{% endif %}
+                        {% for h in stats.by_hour %}
+                        <div class="flex-fill text-center" title="{{ h.hour }}:00 — {{ h.count }}">
+                            <div class="bg-primary rounded-top mx-auto"
+                                 style="height: {{ ((h.count / max_h) * 120)|int }}px; min-height: {% if h.count %}2px{% else %}0{% endif %}; width: 70%; opacity: .85;"></div>
+                            <div class="small text-muted" style="font-size:.65rem">{{ h.hour }}</div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <p class="small text-muted mb-0 mt-2">События за период: {{ stats.events_today }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><strong>Топ логинов за период</strong></div>
+            <ul class="list-group list-group-flush">
+                {% for row in stats.top_users %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{{ row.username }}</span>
+                    <span class="badge text-bg-secondary">{{ row.count }}</span>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">Пока нет данных</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><strong>Топ IP за период</strong></div>
+            <ul class="list-group list-group-flush">
+                {% for row in stats.top_ips %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <code>{{ row.ip }}</code>
+                    <span class="badge text-bg-secondary">{{ row.count }}</span>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">Пока нет данных</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>События за период</strong>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.reload()">
+            <i class="fas fa-sync-alt"></i> Обновить
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Время</th>
+                        <th>Тип</th>
+                        <th>Логин</th>
+                        <th>IP</th>
+                        <th>Путь</th>
+                        <th>UA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in recent %}
+                    <tr>
+                        <td class="small text-nowrap">{{ e.created_at }}</td>
+                        <td><span class="badge text-bg-{% if e.event_type == 'login' %}success{% elif e.event_type == 'logout' %}secondary{% else %}info{% endif %}">{{ e.event_type }}</span></td>
+                        <td>{{ e.username or '—' }}</td>
+                        <td><code>{{ e.ip or '—' }}</code></td>
+                        <td class="small text-truncate" style="max-width:14rem" title="{{ e.path or '' }}">{{ e.path or '—' }}</td>
+                        <td class="small text-truncate" style="max-width:16rem" title="{{ e.user_agent or '' }}">{{ e.user_agent or '—' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-muted text-center py-3">Нет событий за выбранный период</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+function toggleCustomDates() {
+    const period = document.getElementById('demoPeriod').value;
+    document.querySelectorAll('.demo-custom-dates').forEach(el => {
+        el.style.display = period === 'custom' ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

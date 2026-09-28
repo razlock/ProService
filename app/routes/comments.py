@@ -1,0 +1,155 @@
+"""
+Blueprint для работы с комментариями (загрузка файлов).
+"""
+from flask import Blueprint, request, jsonify, send_file
+from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+import os
+import uuid
+from app.database.connection import get_db_connection
+from app.utils.safe_files import confined_file_path, is_forbidden_upload_extension, mime_from_filename, sniff_staff_upload
+from app.utils.error_handlers import api_internal_error
+from app.services.user_service import UserService
+import sqlite3
+import logging
+
+logger = logging.getLogger(__name__)
+
+bp = Blueprint('comments', __name__, url_prefix='/api/comments')
+
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+COMMENTS_UPLOAD_DIR = os.path.join(_PROJECT_ROOT, 'uploads', 'comments')
+
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx', 'txt'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+def allowed_file(filename):
+    """Проверяет, разрешен ли тип файла."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def user_may_access_attachment(cursor, attachment_row, user_id: int) -> bool:
+    """RBAC: вложение только при праве на заявку (или edit_orders для «сирот» до привязки)."""
+    comment_id = attachment_row['comment_id']
+    if comment_id:
+        if not UserService.check_permission(user_id, 'view_orders'):
+            return False
+        cursor.execute(
+            'SELECT order_id FROM order_comments WHERE id = ?',
+            (comment_id,),
+        )
+        order_row = cursor.fetchone()
+        return bool(order_row)
+    return UserService.check_permission(user_id, 'edit_orders')
+
+
+@bp.route('/upload', methods=['POST'])
+@login_required
+def upload_attachment():
+    """
+    Загружает файл для комментария.
+    
+    Returns:
+        JSON с attachment_id и file_path
+    """
+    try:
+        if not UserService.check_permission(current_user.id, 'edit_orders'):
+            return jsonify({'success': False, 'error': 'Недостаточно прав'}), 403
+
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'Файл не загружен'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'Файл не выбран'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'success': False, 'error': 'Недопустимый тип файла'}), 400
+
+        if is_forbidden_upload_extension(file.filename):
+            return jsonify({'success': False, 'error': 'Недопустимый тип файла'}), 400
+        
+        # Проверяем размер файла
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+        
+        if file_size > MAX_FILE_SIZE:
+            return jsonify({'success': False, 'error': 'Файл слишком большой (максимум 10 MB)'}), 400
+
+        header = file.read(64)
+        file.seek(0)
+        sniffed = sniff_staff_upload(header, file.filename)
+        if not sniffed:
+            return jsonify({'success': False, 'error': 'Недопустимый тип файла'}), 400
+
+        # Сохраняем файл
+        upload_dir = COMMENTS_UPLOAD_DIR
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4()}_{filename}"
+        file_path = os.path.join(upload_dir, unique_filename)
+        stored_mime = sniffed
+
+        file.save(file_path)
+        
+        # Сохраняем информацию о файле в БД
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO comment_attachments 
+                (filename, file_path, file_size, mime_type, created_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ''', (filename, file_path, file_size, stored_mime))
+            conn.commit()
+            attachment_id = cursor.lastrowid
+        
+        return jsonify({
+            'success': True,
+            'attachment_id': attachment_id,
+            'filename': filename,
+            'file_path': f'/api/comments/attachment/{attachment_id}'
+        }), 201
+    except Exception as e:
+        logger.error(f"Ошибка при загрузке файла: {e}", exc_info=True)
+        return api_internal_error(e)
+
+
+@bp.route('/attachment/<int:attachment_id>', methods=['GET'])
+@login_required
+def get_attachment(attachment_id):
+    """Получает файл вложения."""
+    try:
+        with get_db_connection(row_factory=sqlite3.Row) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, comment_id, filename, file_path, mime_type
+                FROM comment_attachments
+                WHERE id = ?
+            ''', (attachment_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return jsonify({'success': False, 'error': 'Файл не найден'}), 404
+
+            if not user_may_access_attachment(cursor, row, current_user.id):
+                return jsonify({'success': False, 'error': 'Недостаточно прав'}), 403
+            
+            file_path = confined_file_path(row['file_path'], COMMENTS_UPLOAD_DIR)
+            if not file_path or not os.path.exists(file_path):
+                return jsonify({'success': False, 'error': 'Файл не найден на диске'}), 404
+            
+            response = send_file(
+                file_path,
+                mimetype=mime_from_filename(row['filename']),
+                as_attachment=True,
+                download_name=row['filename']
+            )
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            return response
+    except Exception as e:
+        logger.error(f"Ошибка при получении файла: {e}", exc_info=True)
+        return api_internal_error(e)

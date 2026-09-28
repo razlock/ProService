@@ -1,0 +1,115 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+.venv-win/
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+# Любые SQLite в database/ (в репозитории только bootstrap/*.sql)
+database/*.db
+# Рабочая SQLite (не коммитить; путь по умолчанию в app/config.py)
+database/service_center.db
+database/service_center.db.backup_*
+# Локальные дампы БД (крупные)
+database/backups/*.dump
+database/backups/vps_restore_plain*.sql
+database/backups/local_nikacrm*.sql
+database/backups/local_nikacrm*.dump.zip
+app/database/*.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Cursor: кэш и локальные данные IDE; в репозиторий — только правила агента (.mdc)
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**/*.mdc
+
+# Пользовательские загрузки (могут содержать ПДн)
+uploads/
+
+# Файлы workspace редактора
+*.code-workspace
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+app.log
+
+# Backup files
+*.backup
+*.bak
+
+# Archived / saved (удалить или исключить из проекта)
+save/
+
+# OWASP ZAP отчёты и локальные учётки для security-скриптов
+reports/zap/
+scripts/zap/scan_users.json
+
+# Windows offline installer: downloaded runtimes, wheelhouse and build output
+packaging/windows/assets/
+packaging/windows/output/
+packaging/windows/smoke-results/
+packaging/windows/NikaCRM-Smoke.wsb
+
+# DR off-VPS snapshots (secrets + PII dumps)
+data/database/backups/dr-snapshots/
+database/backups/dr-snapshots/
+crm_screen/
+
+# Бэкапы проекта (не пушим в git)
+backups/
+*.tar.gz
+*.tar.xz
+*.7z
+
+# Служебные файлы установщика
+data/installer/
+
+# Временные бэкапы шаблонов
+*.bak-*
+*.bak

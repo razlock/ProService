@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Вход в систему — Profi Service</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="{{ url_for('static', filename='cdn/bootstrap/5.3.0/css/bootstrap.min.css') }}" rel="stylesheet">
+    
+    <!-- Font Awesome 7 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='cdn/font-awesome/7.0.0/css/all.min.css') }}">
+    
+    <style nonce="{{ csp_nonce() }}">
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .login-card.login-card-wide {
+            max-width: 560px;
+        }
+        .demo-login-spec {
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <main role="main" class="d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+        <div class="card login-card{% if demo_login %} login-card-wide{% endif %}">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-tools fa-3x text-primary mb-3"></i>
+                            <h2 class="card-title">Profi Service</h2>
+                            <p class="text-muted">Войдите в систему</p>
+                        </div>
+                        
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <form method="POST" action="{{ url_for('main.login') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="fas fa-user me-1"></i>Имя пользователя
+                                </label>
+                                <input type="text" class="form-control" id="username" name="username" required autofocus autocomplete="username">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock me-1"></i>Пароль
+                                </label>
+                                <input type="password" class="form-control" id="password" name="password" required autocomplete="current-password">
+                            </div>
+
+                            {% if branches %}
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Выберите филиал <span class="text-danger">*</span>
+                                </label>
+                                <div id="branchSelectionHint" class="small text-danger mb-2" style="display:none;">
+                                    <i class="fas fa-exclamation-circle me-1"></i>Пожалуйста, выберите филиал для входа
+                                </div>
+                                <div class="row g-2 align-items-stretch">
+                                    {% for branch in branches %}
+                                    <div class="col-6">
+                                        <input type="radio" class="btn-check" name="branch_id" 
+                                               id="branch_{{ branch.id }}" value="{{ branch.id }}">
+                                        <label class="btn btn-outline-primary w-100 p-3 h-100 d-flex flex-column justify-content-center" 
+                                               for="branch_{{ branch.id }}" style="min-height: 120px;">
+                                            <span class="d-block mx-auto mb-2 rounded-circle" 
+                                                  style="width: 16px; height: 16px; background-color: {{ branch.color }};"></span>
+                                            <span class="d-block fw-semibold">{{ branch.name }}</span>
+                                            <span class="d-block small text-muted mt-1">{{ branch.address }}</span>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me" value="1">
+                                <label class="form-check-label" for="remember_me">Запомнить меня</label>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Войти
+                                </button>
+                            </div>
+                        </form>
+
+                        {% if demo_login %}
+                        <div class="alert alert-info mt-4 mb-0 small" role="region" aria-label="Демо-доступ">
+                            <div class="fw-semibold mb-2"><i class="fas fa-flask me-1"></i> Демо-доступ</div>
+                            <p class="mb-2"><strong>Логин:</strong> <code>{{ demo_login.username }}</code>
+                                &nbsp;·&nbsp; <strong>Пароль:</strong> <code>{{ demo_login.password }}</code></p>
+                            <ul class="mb-2 ps-3">
+                                <li>Заявок в базе (видимых): {% if demo_login.count_orders is not none %}<strong>{{ demo_login.count_orders }}</strong>{% else %}—{% endif %}</li>
+                                <li>Учётных записей сотрудников: {% if demo_login.count_users is not none %}<strong>{{ demo_login.count_users }}</strong>{% else %}—{% endif %}</li>
+                                <li>Клиентов: {% if demo_login.count_customers is not none %}<strong>{{ demo_login.count_customers }}</strong>{% else %}—{% endif %}</li>
+                                <li>Позиций на складе (запчасти): {% if demo_login.count_parts is not none %}<strong>{{ demo_login.count_parts }}</strong>{% else %}—{% endif %}</li>
+                            </ul>
+                            <p class="demo-login-spec text-muted mb-0"><strong>Окружение и железо:</strong><br>{{ demo_login.server_spec }}</p>
+                            {% if demo_login.vps_url %}
+                            <hr class="my-3 opacity-50">
+                            <div class="fw-semibold mb-2"><i class="fas fa-server me-1"></i> VPS для своей копии CRM</div>
+                            <p class="mb-2">
+                                Провайдер <strong>{{ demo_login.vps_label }}</strong>:
+                                <a href="{{ demo_login.vps_url }}" target="_blank" rel="noopener noreferrer">заказать сервер по реферальной ссылке</a>
+                                {% if demo_login.vps_promo %}
+                                — промокод на скидку: <code>{{ demo_login.vps_promo }}</code>
+                                {% endif %}
+                            </p>
+                            <p class="mb-0 text-muted">
+                                При покупке VPS по реферальной ссылке и промокоду автор <strong>бесплатно</strong> установит CRM и поможет с поддержкой.
+                                Напишите на <a href="mailto:nika-sc@bk.ru?subject=Nika-CRM%20%D0%9F%D0%BE%D0%BC%D0%BE%D1%89%D1%8C%20%D0%BF%D0%BE%20%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B5">nika-sc@bk.ru</a>
+                                с темой <strong>Nika-CRM Помощь по установке</strong>
+                                или в <a href="https://t.me/nikaserviceadler" target="_blank" rel="noopener noreferrer">Telegram-канал</a>
+                                · <a href="mailto:smelkov2008@yandex.ru">smelkov2008@yandex.ru</a>.
+                            </p>
+                            {% endif %}
+                            {% if windows_setup %}
+                            <hr class="my-3 opacity-50">
+                            <div class="fw-semibold mb-2"><i class="fab fa-windows me-1"></i> Windows Offline SETUP {{ windows_setup.version }}{% if windows_setup.build_date %} ({{ windows_setup.build_date }}){% endif %}</div>
+                            <p class="mb-2">
+                                Автономная установка на свой ПК (нужны права администратора):
+                                <a href="{{ windows_setup.github_download_url }}">скачать с GitHub</a>
+                                ·
+                                <a href="{{ windows_setup.demo_download_url }}">зеркало</a>.
+                                Логины SETUP: <code>admin</code>/<code>manager</code>/<code>master</code>/<code>viewer</code>, пароль <code>111111</code>.
+                                {% if windows_setup.sha256 %}<span class="d-block small text-muted mt-1">SHA256: <code>{{ windows_setup.sha256 }}</code></span>{% endif %}
+                            </p>
+                            {% if windows_update and windows_update.latest %}
+                            <p class="mb-2 text-success">
+                                Доступна новая версия <strong>{{ windows_update.latest.version }}</strong>.
+                                <a href="{{ windows_update.latest.github_download_url or windows_setup.github_download_url }}">Скачать установщик</a>
+                                и запустить от имени администратора поверх текущей установки — база сохранится.
+                            </p>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if config.DEBUG %}
+                        <div class="mt-4 text-center">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                По умолчанию: admin / admin
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+    </main>
+    
+    <footer class="text-center text-muted py-3" style="position: fixed; bottom: 0; left: 0; right: 0; font-size: 0.85rem;">
+        Profi Service &copy; 2026
+    </footer>
+    <!-- Bootstrap JS -->
+    <script src="{{ url_for('static', filename='cdn/bootstrap/5.3.0/js/bootstrap.bundle.min.js') }}"></script>
+    <script nonce="{{ csp_nonce() }}">
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.querySelector('form[method="POST"]');
+            
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    const selectedBranch = document.querySelector('input[name="branch_id"]:checked');
+                    
+                    if (!selectedBranch) {
+                        e.preventDefault();
+                        // Показать подсказку
+                        const hint = document.getElementById('branchSelectionHint');
+                        if (hint) hint.style.display = 'block';
+                        alert('Пожалуйста, выберите филиал!');
+                        
+                        // Подсветим блок выбора филиала красным
+                        const branchContainer = document.querySelector('.row.g-2.align-items-stretch');
+                        if (branchContainer) {
+                            branchContainer.style.border = '2px solid #dc3545';
+                            branchContainer.style.borderRadius = '8px';
+                            branchContainer.style.padding = '8px';
+                            
+                            // Убираем подсветку при выборе
+                            document.querySelectorAll('input[name="branch_id"]').forEach(function(radio) {
+                                radio.addEventListener('change', function() {
+                                    branchContainer.style.border = '';
+                                    branchContainer.style.padding = '';
+                                    const hint = document.getElementById('branchSelectionHint');
+                                    if (hint) hint.style.display = 'none';
+                                });
+                            });
+                        }
+                        
+                        return false;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+

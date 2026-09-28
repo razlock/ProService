@@ -1,0 +1,694 @@
+"""
+Blueprint для работы с клиентами.
+"""
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, current_app
+from flask_login import login_required
+from app.routes.main import permission_required
+from flask_wtf.csrf import CSRFError
+from app.services.customer_service import CustomerService
+from app.services.device_service import DeviceService
+from app.services.reference_service import ReferenceService
+from app.utils.validators import normalize_phone
+from app.utils.exceptions import ValidationError, NotFoundError, DatabaseError
+from app.utils.error_handlers import api_internal_error
+import logging
+import html as _html
+import json as _json
+import re as _re
+import sqlite3
+from app.database.connection import get_db_connection
+from app.database.queries.customer_queries import CustomerQueries
+
+bp = Blueprint('customers', __name__)
+logger = logging.getLogger(__name__)
+
+def format_phone_display(phone: str) -> str:
+    """Форматирует телефон для отображения."""
+    from app.utils.locale_fmt import format_phone_display as _fmt
+    return _fmt(phone)
+
+@bp.route('/clients')
+@login_required
+@permission_required('view_customers')
+def clients():
+    """Список всех клиентов."""
+    search_query = request.args.get('q', '').strip()
+    kind_filter = (request.args.get('kind') or '').strip().lower() or ''
+    if kind_filter not in ('', 'person', 'ip', 'legal', 'orgs'):
+        kind_filter = ''
+    # Страница использует server-side DataTables, данные подгружаются через AJAX.
+    return render_template('clients.html',
+        customers=[],
+        search_query=search_query,
+        kind_filter=kind_filter,
+        page_mode='clients',
+        page=1,
+        pages=1,
+        total=0
+    )
+
+
+@bp.route('/organizations')
+@login_required
+@permission_required('view_customers')
+def organizations():
+    """Реестр организаций (ИП и юрлица) — те же клиенты с фильтром реквизитов."""
+    search_query = request.args.get('q', '').strip()
+    return render_template('clients.html',
+        customers=[],
+        search_query=search_query,
+        kind_filter='orgs',
+        page_mode='organizations',
+        page=1,
+        pages=1,
+        total=0
+    )
+
+def _format_date_ddmmyyyy(dt_str: str) -> str:
+    if not dt_str:
+        return ''
+    # ожидаем 'YYYY-MM-DD ...'
+    try:
+        date_part = dt_str.split(' ')[0]
+        y, m, d = date_part.split('-')
+        return f"{d}.{m}.{y}"
+    except Exception:
+        return dt_str
+
+def _phone_digits(s: str) -> str:
+    if not s:
+        return ''
+    return _re.sub(r'[^0-9]', '', str(s))
+
+@bp.route('/api/datatables/clients')
+@login_required
+@permission_required('view_customers')
+def api_datatables_clients():
+    """Server-side DataTables источник данных для /clients."""
+    draw = int(request.args.get('draw', 1))
+    start = int(request.args.get('start', 0))
+    length = int(request.args.get('length', 25))
+    if length <= 0:
+        length = 25
+    if length > 200:
+        length = 200
+    page = (start // length) + 1
+
+    search_value = (request.args.get('search[value]', '') or '').strip()
+    kind_filter = (request.args.get('kind') or '').strip().lower() or None
+    if kind_filter not in ('person', 'ip', 'legal', 'orgs'):
+        kind_filter = None
+
+    # Сортировка (поддерживаем только базовые поля, остальное — по имени)
+    order_col = int(request.args.get('order[0][column]', 0) or 0)
+    order_dir = (request.args.get('order[0][dir]', 'asc') or 'asc').upper()
+    sort_order = 'DESC' if order_dir == 'DESC' else 'ASC'
+    sort_by = {0: 'name', 1: 'phone', 2: 'email'}.get(order_col, 'name')
+
+    # Нормализация поиска по телефону: если запрос "похож на телефон", ищем по цифрам
+    search_q = None
+    if search_value:
+        digits = _phone_digits(search_value)
+        if digits and len(digits) >= 6 and not _re.search(r'[A-Za-zА-Яа-я]', search_value):
+            search_q = digits
+        else:
+            search_q = search_value
+
+    result = CustomerQueries.get_customers_with_details(
+        search_query=search_q,
+        page=page,
+        per_page=length,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        kind_filter=kind_filter,
+    )
+
+    # recordsTotal: без search (с учётом kind)
+    with get_db_connection(row_factory=sqlite3.Row) as conn:
+        cursor = conn.cursor()
+        if kind_filter == 'orgs':
+            cursor.execute(
+                "SELECT COUNT(*) AS cnt FROM customers WHERE COALESCE(customer_kind, 'person') IN ('ip', 'legal')"
+            )
+        elif kind_filter in ('person', 'ip', 'legal'):
+            cursor.execute(
+                "SELECT COUNT(*) AS cnt FROM customers WHERE COALESCE(customer_kind, 'person') = ?",
+                (kind_filter,),
+            )
+        else:
+            cursor.execute("SELECT COUNT(*) AS cnt FROM customers")
+        records_total = int(cursor.fetchone()['cnt'])
+
+    records_filtered = int(result['total'])
+
+    kind_labels = {'person': 'Физлицо', 'ip': 'ИП', 'legal': 'Юрлицо'}
+    data = []
+    for c in result['items']:
+        cid = c.get('id')
+        name = c.get('name') or '—'
+        phone = c.get('phone') or ''
+        email = c.get('email') or ''
+        devices_count = int(c.get('devices_count') or 0)
+        orders_count = int(c.get('orders_count') or 0)
+        last_order_date = c.get('last_order_date')
+        ckind = c.get('customer_kind') or 'person'
+        inn = (c.get('inn') or '').strip()
+
+        name_html = (
+            f'<a href="/clients/{cid}" class="text-primary fw-bold text-decoration-none" '
+            f'onclick="event.stopPropagation();">{_html.escape(str(name))}</a>'
+        )
+        if c.get('legal_name') and str(c.get('legal_name')) != str(name):
+            name_html += (
+                f'<div class="small text-muted">{_html.escape(str(c.get("legal_name")))}</div>'
+            )
+
+        kind_badge = {
+            'person': 'secondary',
+            'ip': 'info',
+            'legal': 'primary',
+        }.get(ckind, 'secondary')
+        kind_html = (
+            f'<span class="badge text-bg-{kind_badge}">{_html.escape(kind_labels.get(ckind, ckind))}</span>'
+        )
+        inn_html = _html.escape(inn) if inn else '<span class="text-muted">—</span>'
+
+        # Телефон + меню
+        phone_digits = _phone_digits(phone)
+        if phone_digits:
+            phone_formatted = phone_digits
+            if len(phone_digits) == 11 and phone_digits.startswith('7'):
+                phone_formatted = f"+{phone_digits[0]}({phone_digits[1:4]}){phone_digits[4:7]}-{phone_digits[7:9]}-{phone_digits[9:]}"
+            phone_html = (
+                '<div class="contact-item">'
+                f'<span class="contact-value" data-phone="{phone_digits}" '
+                f'onclick="showPhoneMenu(event, \'{phone_digits}\')">{_html.escape(phone_formatted)}</span>'
+                f'<div class="contact-dropdown" id="phoneMenu-{phone_digits}">'
+                f'<a href="tel:{phone_digits}" class="contact-dropdown-item" onclick="event.stopPropagation();">'
+                '<i class="fas fa-phone"></i> Позвонить</a>'
+                f'<a href="https://wa.me/{phone_digits}" class="contact-dropdown-item" onclick="event.stopPropagation();">'
+                '<i class="fab fa-whatsapp"></i> WhatsApp</a>'
+                f'<a href="viber://chat?number={phone_digits}" class="contact-dropdown-item" onclick="event.stopPropagation();">'
+                '<i class="fab fa-viber"></i> Viber</a>'
+                f'<a href="https://t.me/+{(phone_digits if phone_digits.startswith("7") else ("7" + phone_digits[1:] if len(phone_digits) == 11 and phone_digits.startswith("8") else phone_digits))}" class="contact-dropdown-item" onclick="event.stopPropagation();">'
+                '<i class="fab fa-telegram"></i> Написать в Телеграмм</a>'
+                f'<a href="#" class="contact-dropdown-item" onclick="copyToClipboard(\'{phone_digits}\', event)">'
+                '<i class="fas fa-copy"></i> Копировать</a>'
+                '</div>'
+                f'<button class="contact-btn" onclick="copyToClipboard(\'{phone_digits}\', event)" title="Копировать">'
+                '<i class="fas fa-copy"></i></button>'
+                '</div>'
+            )
+        else:
+            phone_html = '<span class="text-muted">—</span>'
+
+        if email:
+            email_esc = _html.escape(str(email))
+            email_html = (
+                '<div class="contact-item">'
+                f'<a href="mailto:{email_esc}" class="contact-value" onclick="event.stopPropagation();">{email_esc}</a>'
+                f'<button class="contact-btn" onclick="copyToClipboard({_json.dumps(str(email))}, event)" title="Копировать">'
+                '<i class="fas fa-copy"></i></button>'
+                '</div>'
+            )
+        else:
+            email_html = '<span class="text-muted">—</span>'
+
+        devices_html = f'<span class="badge bg-info" data-order="{devices_count}">{devices_count}</span>'
+        orders_html = f'<span class="badge bg-primary" data-order="{orders_count}">{orders_count}</span>'
+
+        if last_order_date:
+            last_order_html = f'<span data-order="{_html.escape(str(last_order_date))}">{_html.escape(_format_date_ddmmyyyy(str(last_order_date)))}</span>'
+        else:
+            last_order_html = '<span class="text-muted" data-order="0">—</span>'
+
+        actions_html = (
+            '<div class="btn-group" role="group">'
+            f'<a href="/clients/{cid}" class="btn btn-sm btn-primary" title="Просмотр" onclick="event.stopPropagation();">'
+            '<i class="fas fa-eye"></i></a>'
+            f'<a href="/add_order?customer_id={cid}" class="btn btn-sm btn-success" title="Создать заявку" onclick="event.stopPropagation();">'
+            '<i class="fas fa-file-alt"></i></a>'
+            f'<button type="button" class="btn btn-sm btn-info" onclick="event.stopPropagation(); editCustomer({cid})" title="Редактировать">'
+            '<i class="fas fa-edit"></i></button>'
+            f'<button type="button" class="btn btn-sm btn-warning" onclick="event.stopPropagation(); viewCustomerHistory({cid})" title="История">'
+            '<i class="fas fa-history"></i></button>'
+            f'<button type="button" class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteCustomer({cid}, {_json.dumps(str(name))})" title="Удалить">'
+            '<i class="fas fa-trash"></i></button>'
+            '</div>'
+        )
+
+        data.append({
+            "client": name_html,
+            "kind": kind_html,
+            "inn": inn_html,
+            "phone": phone_html,
+            "email": email_html,
+            "devices": devices_html,
+            "orders": orders_html,
+            "last_order": last_order_html,
+            "actions": actions_html,
+        })
+
+    return jsonify({
+        "draw": draw,
+        "recordsTotal": records_total,
+        "recordsFiltered": records_filtered,
+        "data": data
+    })
+
+@bp.route('/clients/<int:client_id>')
+@login_required
+@permission_required('view_customers')
+def client_detail(client_id):
+    """Детали клиента."""
+    customer = CustomerService.get_customer(client_id)
+    if not customer:
+        return redirect(url_for('customers.clients'))
+
+    devices = DeviceService.get_customer_devices(client_id)
+    orders = CustomerService.get_customer_orders(client_id)
+    all_sales = CustomerService.get_customer_all_sales(client_id)
+    # Справочники устройств (тысячи option) — не SSR: грузятся AJAX при открытии модалки
+    device_types = []
+    device_brands = []
+    symptoms = []
+    appearance_tags = []
+    stats = CustomerService.get_customer_statistics(client_id)
+    
+    customer_dict = customer.to_dict()
+    customer_dict['orders_count'] = len(orders) if orders else 0
+    customer_dict['devices_count'] = len(devices) if devices else 0
+    
+    summaries = DeviceService.get_customer_devices_order_summaries(
+        [device.id for device in (devices or [])]
+    )
+    devices_list = []
+    for device in devices:
+        device_dict = device.to_dict()
+        info = summaries.get(device.id) or {}
+        device_dict['orders_count'] = info.get('orders_count') or 0
+        device_dict['last_order_symptom_tags'] = info.get('last_order_symptom_tags')
+        device_dict['last_order_appearance'] = info.get('last_order_appearance')
+        device_dict['last_order_date'] = info.get('last_order_date')
+        device_dict['last_order_status'] = info.get('last_order_status')
+        devices_list.append(device_dict)
+    
+    return render_template('client_detail.html',
+        customer=customer_dict,
+        devices=devices_list,
+        orders=orders,
+        all_sales=all_sales,
+        device_types=device_types,
+        device_brands=device_brands,
+        symptoms=symptoms,
+        appearance_tags=appearance_tags,
+        stats=stats
+    )
+
+@bp.route('/clients/<int:client_id>/create_order')
+@login_required
+@permission_required('create_orders')
+def create_order_from_client(client_id):
+    """Создание заявки из клиента."""
+    customer = CustomerService.get_customer(client_id)
+    if not customer:
+        return redirect(url_for('customers.clients'))
+    return redirect(url_for('orders.add_order', customer_id=client_id))
+
+# API endpoints для клиентов
+@bp.route('/api/customers/suggest')
+@login_required
+def api_suggest_customers():
+    """Поиск клиентов по имени / юр. названию / ИНН / телефону (для счетов и форм)."""
+    from app.services.user_service import UserService
+    from flask_login import current_user
+
+    if not (
+        UserService.check_permission(current_user.id, 'view_customers')
+        or UserService.check_permission(current_user.id, 'manage_invoices')
+        or UserService.check_permission(current_user.id, 'view_invoices')
+    ):
+        return jsonify({'success': False, 'error': 'forbidden'}), 403
+
+    query = (request.args.get('q') or '').strip()
+    kind = (request.args.get('kind') or '').strip().lower() or None
+    if kind not in ('person', 'ip', 'legal', 'orgs'):
+        kind = None
+    limit = min(30, max(1, request.args.get('limit', 15, type=int) or 15))
+    if len(query) < 2:
+        return jsonify({'success': True, 'customers': []})
+
+    # kind_filter в SQL до LIMIT — иначе частые ФИО забивают выборку физлицами
+    rows = CustomerService.search_customers(query, limit=limit, kind_filter=kind)
+
+    customers = []
+    for r in rows:
+        label_parts = [r.get('name') or '']
+        if r.get('legal_name') and r.get('legal_name') != r.get('name'):
+            label_parts.append(r.get('legal_name'))
+        if r.get('inn'):
+            label_parts.append(f"ИНН {r.get('inn')}")
+        if r.get('phone'):
+            label_parts.append(r.get('phone'))
+        customers.append({
+            'id': r.get('id'),
+            'name': r.get('name') or '',
+            'phone': r.get('phone') or '',
+            'email': r.get('email') or '',
+            'customer_kind': r.get('customer_kind') or 'person',
+            'inn': r.get('inn') or '',
+            'kpp': r.get('kpp') or '',
+            'ogrn': r.get('ogrn') or '',
+            'legal_name': r.get('legal_name') or '',
+            'legal_address': r.get('legal_address') or '',
+            'bank_name': r.get('bank_name') or '',
+            'bik': r.get('bik') or '',
+            'checking_account': r.get('checking_account') or '',
+            'corr_account': r.get('corr_account') or '',
+            'label': ' · '.join(p for p in label_parts if p),
+        })
+    return jsonify({'success': True, 'customers': customers})
+
+
+@bp.route('/api/customers/lookup')
+@login_required
+@permission_required('view_customers')
+def api_lookup_customer():
+    """Поиск клиента по телефону."""
+    phone = request.args.get('phone', '')
+    if not phone.strip():
+        return jsonify({'success': False, 'error': 'phone_required'}), 400
+    
+    try:
+        phone = normalize_phone(phone)
+        customer = CustomerService.get_customer_by_phone(phone)
+        
+        if not customer:
+            return jsonify({'success': True, 'found': False})
+        
+        devices = DeviceService.get_customer_devices(customer.id)
+        customer_dict = customer.to_dict()
+        devices_list = [d.to_dict() for d in devices]
+        
+        return jsonify({
+            'success': True,
+            'found': True,
+            'customer': customer_dict,
+            'devices': devices_list
+        })
+    except ValidationError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@bp.route('/api/customers', methods=['POST'])
+@login_required
+@permission_required('create_customers')
+def api_create_customer():
+    """API для создания нового клиента."""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        customer = CustomerService.create_customer(data)
+        payload = {
+            'success': True,
+            'customer': customer.to_dict(),
+            'message': 'Клиент успешно создан',
+        }
+        temp = getattr(customer, '_portal_temp_password', None)
+        if temp:
+            payload['portal_temp_password'] = temp
+            payload['portal_password_note'] = (
+                'Покажите пароль клиенту один раз. В базе хранится только хеш; '
+                'повторно открыть его нельзя — только сбросить.'
+            )
+        return jsonify(payload), 201
+    except (ValidationError, NotFoundError) as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except DatabaseError as e:
+        return api_internal_error(e)
+    except Exception as e:
+        logger.exception("Ошибка при создании клиента")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@bp.route('/api/customers/<int:client_id>', methods=['GET'])
+@login_required
+@permission_required('view_customers')
+def api_get_customer(client_id):
+    """API для получения данных клиента."""
+    try:
+        customer = CustomerService.get_customer(client_id)
+        if not customer:
+            return jsonify({'success': False, 'error': 'Клиент не найден'}), 404
+        
+        return jsonify({'success': True, 'customer': customer.to_dict()})
+    except Exception as e:
+        logger.exception("Ошибка при получении клиента")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@bp.route('/api/customers/<int:client_id>', methods=['PUT'])
+@login_required
+@permission_required('edit_customers')
+def api_update_client(client_id):
+    """API для обновления данных клиента."""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        CustomerService.update_customer(client_id, data)
+        
+        customer = CustomerService.get_customer(client_id)
+        if not customer:
+            return jsonify({'success': False, 'error': 'Клиент не найден'}), 404
+        
+        return jsonify({'success': True, 'customer': customer.to_dict()})
+    except (ValidationError, NotFoundError) as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except DatabaseError as e:
+        return api_internal_error(e)
+    except Exception as e:
+        logger.exception("Ошибка при обновлении клиента")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@bp.route('/api/customers/<int:client_id>', methods=['DELETE'])
+@login_required
+@permission_required('delete_customers')
+def api_delete_client(client_id):
+    """API для удаления клиента."""
+    try:
+        # Проверяем, есть ли у клиента заявки или устройства
+        customer = CustomerService.get_customer(client_id)
+        if not customer:
+            return jsonify({'success': False, 'error': 'Клиент не найден'}), 404
+        
+        # Проверяем наличие связанных данных
+        if customer.orders_count and customer.orders_count > 0:
+            return jsonify({
+                'success': False, 
+                'error': 'Невозможно удалить клиента с существующими заявками'
+            }), 400
+        
+        if customer.devices_count and customer.devices_count > 0:
+            return jsonify({
+                'success': False, 
+                'error': 'Невозможно удалить клиента с существующими устройствами'
+            }), 400
+        
+        # Удаляем клиента
+        from app.database.connection import get_db_connection
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM customers WHERE id = ?', (client_id,))
+            conn.commit()
+        
+        return jsonify({'success': True, 'message': 'Клиент успешно удален'})
+    except Exception as e:
+        logger.exception("Ошибка при удалении клиента")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@bp.route('/api/customers/<int:client_id>/portal-password', methods=['POST'])
+@login_required
+@permission_required('edit_customers')
+def api_set_portal_password(client_id):
+    """API для установки пароля портала клиента (администратором)."""
+    try:
+        data = request.get_json(silent=True) or {}
+        password = data.get('password', '').strip()
+        
+        if not password:
+            return jsonify({'success': False, 'error': 'Пароль обязателен'}), 400
+
+        from app.utils.validators import password_meets_policy, PASSWORD_MAX_LEN, PASSWORD_MIN_LEN
+        if not password_meets_policy(password):
+            if len(password) > PASSWORD_MAX_LEN:
+                return jsonify({'success': False, 'error': 'Пароль слишком длинный'}), 400
+            return jsonify({
+                'success': False,
+                'error': f'Пароль должен быть не менее {PASSWORD_MIN_LEN} символов',
+            }), 400
+        
+        from app.services.customer_portal_service import CustomerPortalService
+        # Администратор устанавливает пароль - сбрасываем флаг смены пароля
+        success = CustomerPortalService.set_portal_password(client_id, password, reset_change_flag=True)
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Пароль портала установлен'})
+        else:
+            return jsonify({'success': False, 'error': 'Не удалось установить пароль'}), 500
+    except Exception as e:
+        logger.exception("Ошибка при установке пароля портала")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@bp.route('/api/customers/<int:client_id>/portal-password', methods=['DELETE'])
+@login_required
+@permission_required('edit_customers')
+def api_remove_portal_password(client_id):
+    """API для удаления пароля портала клиента."""
+    try:
+        from app.services.customer_portal_service import CustomerPortalService
+        success = CustomerPortalService.disable_portal(client_id)
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Пароль портала удален'})
+        else:
+            return jsonify({'success': False, 'error': 'Не удалось удалить пароль'}), 500
+    except Exception as e:
+        logger.exception("Ошибка при удалении пароля портала")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@bp.route('/api/customers/<int:client_id>/portal-password/show', methods=['GET'])
+@login_required
+@permission_required('view_customers')
+def api_show_portal_password(client_id):
+    """Пароль ЛК в открытом виде не хранится — только сброс."""
+    try:
+        customer = CustomerService.get_customer(client_id)
+        if not customer:
+            return jsonify({'success': False, 'error': 'Клиент не найден'}), 404
+
+        if customer.portal_password_changed:
+            return jsonify({
+                'success': False,
+                'error': 'Клиент уже сменил пароль. Задайте новый в карточке, если нужен повторный доступ.',
+            }), 400
+
+        return jsonify({
+            'success': False,
+            'error': (
+                'Пароль в открытом виде не хранится. '
+                'Задайте новый пароль в карточке клиента или попросите клиента ссылку из письма.'
+            ),
+        }), 400
+    except Exception as e:
+        logger.exception("Ошибка при запросе пароля портала")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@bp.route('/api/clients/<int:client_id>/devices', methods=['POST'])
+@login_required
+@permission_required('edit_customers')
+def api_add_device_to_client(client_id):
+    """API для добавления устройства клиенту."""
+    try:
+        data = request.get_json(silent=True) or {}
+        device_type_id = int(data.get('device_type_id'))
+        device_brand_id = int(data.get('device_brand_id'))
+        serial_number = (data.get('serial_number') or '').strip() or None
+        password = (data.get('password') or '').strip() or None
+        symptom_tags = (data.get('symptom_tags') or '').strip() or None
+        appearance_tags = (data.get('appearance_tags') or '').strip() or None
+        comment = (data.get('comment') or '').strip() or None
+        
+        device = DeviceService.create_device(
+            client_id, device_type_id, device_brand_id, serial_number,
+            password=password, symptom_tags=symptom_tags, appearance_tags=appearance_tags,
+            comment=comment
+        )
+        
+        if not device:
+            return jsonify({'success': False, 'error': 'Failed to create device'}), 500
+        
+        devices = DeviceService.get_customer_devices(client_id)
+        devices_list = [d.to_dict() for d in devices]
+        
+        return jsonify({'success': True, 'devices': devices_list}), 201
+    except (ValidationError, NotFoundError) as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except DatabaseError as e:
+        return api_internal_error(e)
+
+@bp.route('/api/clients/<int:client_id>/devices/<int:device_id>', methods=['PUT', 'DELETE'])
+@login_required
+@permission_required('edit_customers')
+def api_device_detail(client_id, device_id):
+    """API для обновления и удаления устройства."""
+    if request.method == 'PUT':
+        try:
+            data = request.get_json(silent=True) or {}
+            device_type_id = data.get('device_type_id')
+            device_brand_id = data.get('device_brand_id')
+            serial_number = data.get('serial_number')
+            password = (data.get('password') or '').strip() or None
+            symptom_tags = (data.get('symptom_tags') or '').strip() or None
+            appearance_tags = (data.get('appearance_tags') or '').strip() or None
+            comment = (data.get('comment') or '').strip() or None
+            
+            # Проверяем, что устройство принадлежит клиенту
+            device = DeviceService.get_device(device_id)
+            if not device:
+                return jsonify({'success': False, 'error': 'Устройство не найдено'}), 404
+            if device.customer_id != client_id:
+                return jsonify({'success': False, 'error': 'Устройство не принадлежит этому клиенту'}), 403
+            
+            DeviceService.update_device(
+                device_id,
+                device_type_id=int(device_type_id) if device_type_id else None,
+                device_brand_id=int(device_brand_id) if device_brand_id else None,
+                serial_number=serial_number,
+                password=password,
+                symptom_tags=symptom_tags,
+                appearance_tags=appearance_tags,
+                comment=comment
+            )
+            
+            device = DeviceService.get_device(device_id)
+            if not device:
+                return jsonify({'success': False, 'error': 'Устройство не найдено'}), 404
+            
+            return jsonify({'success': True, 'device': device.to_dict()})
+        except (ValidationError, NotFoundError) as e:
+            logger.error(f"Ошибка при обновлении устройства {device_id}: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 400
+        except DatabaseError as e:
+            logger.error(f"Ошибка БД при обновлении устройства {device_id}: {e}")
+            return api_internal_error(e)
+        except Exception as e:
+            logger.exception(f"Неожиданная ошибка при обновлении устройства {device_id}")
+            return jsonify({'success': False, 'error': 'Внутренняя ошибка сервера'}), 500
+    
+    if request.method == 'DELETE':
+        try:
+            # Проверяем, что устройство принадлежит клиенту
+            device = DeviceService.get_device(device_id)
+            if not device:
+                logger.warning(f"Попытка удалить несуществующее устройство {device_id} для клиента {client_id}")
+                return jsonify({'success': False, 'error': 'Устройство не найдено'}), 404
+            
+            if device.customer_id != client_id:
+                logger.warning(f"Попытка удалить устройство {device_id} клиента {device.customer_id} от имени клиента {client_id}")
+                return jsonify({'success': False, 'error': 'Устройство не принадлежит этому клиенту'}), 403
+            
+            DeviceService.delete_device(device_id)
+            logger.info(f"Устройство {device_id} успешно удалено для клиента {client_id}")
+            return jsonify({'success': True}), 200
+        except ValidationError as e:
+            logger.error(f"Ошибка валидации при удалении устройства {device_id}: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 400
+        except NotFoundError as e:
+            logger.error(f"Устройство {device_id} не найдено при удалении: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 404
+        except DatabaseError as e:
+            logger.error(f"Ошибка БД при удалении устройства {device_id}: {e}")
+            return api_internal_error(e)
+        except Exception as e:
+            logger.exception(f"Неожиданная ошибка при удалении устройства {device_id}: {e}")
+            return api_internal_error(e)
+

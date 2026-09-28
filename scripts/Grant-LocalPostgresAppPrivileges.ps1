@@ -1,0 +1,94 @@
+﻿<#
+.SYNOPSIS
+    Выдаёт роли из DATABASE_URL права на все объекты в public (после pg_restore --no-owner).
+
+.DESCRIPTION
+    Исправляет ошибку login: psycopg2.errors.InsufficientPrivilege / «нет доступа к таблице users»,
+    когда таблицы принадлежат postgres (или другой роли из дампа), а CRM подключается как пользователь из .env.
+
+.PARAMETER PostgresSuperUserPassword
+    Пароль суперпользователя (postgres). Иначе переменная окружения LOCAL_PG_SUPER_PASSWORD.
+
+.EXAMPLE
+    $env:LOCAL_PG_SUPER_PASSWORD = '***'
+    .\scripts\Grant-LocalPostgresAppPrivileges.ps1
+#>
+[CmdletBinding()]
+param(
+    [string] $PostgresSuperUserPassword = $env:LOCAL_PG_SUPER_PASSWORD,
+    [string] $HostDb = "localhost",
+    [int] $Port = 5432,
+    [string] $SuperUser = "postgres",
+    [string] $EnvFile,
+    [string] $PsqlPath
+)
+
+$ErrorActionPreference = "Stop"
+$root = if ($PSScriptRoot) { (Resolve-Path (Join-Path $PSScriptRoot "..")).Path } else { (Get-Location).Path }
+Set-Location $root
+
+if (-not $PostgresSuperUserPassword) {
+    throw "Укажите -PostgresSuperUserPassword или LOCAL_PG_SUPER_PASSWORD"
+}
+
+$resolvedEnvFile = if ($EnvFile) { $EnvFile } else { Join-Path $root ".env" }
+if (-not (Test-Path -LiteralPath $resolvedEnvFile)) { throw ".env не найден: $resolvedEnvFile" }
+$line = (Get-Content $resolvedEnvFile -Raw) -split "`n" | Where-Object { $_ -match '^DATABASE_URL=' } | Select-Object -First 1
+if (-not $line) { throw "В $resolvedEnvFile нет строки DATABASE_URL=" }
+$url = ($line -replace '^DATABASE_URL=', '').Trim()
+if ($url -notmatch '^postgresql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)$') {
+    throw "DATABASE_URL не распознан как postgresql://..."
+}
+$appUser = $Matches[1]
+$dbName = $Matches[5]
+
+if ($appUser -notmatch '^[a-zA-Z0-9_]+$') {
+    throw "DATABASE_URL user contains unsupported characters: $appUser"
+}
+
+$psql = if ($PsqlPath) { $PsqlPath } else { "C:\Program Files\PostgreSQL\18\bin\psql.exe" }
+if (-not (Test-Path $psql)) { throw "Не найден psql: $psql" }
+
+# Скрипт вызывают и как шаг установщика, в том же процессе PowerShell.
+# Переменные окружения общие, поэтому пароль восстанавливается, а не удаляется:
+# иначе следующий psql в bootstrap молча ждёт ввод пароля.
+$previousPgPassword = $env:PGPASSWORD
+$env:PGPASSWORD = $PostgresSuperUserPassword
+try {
+    $grantSql = @"
+GRANT USAGE ON SCHEMA public TO $appUser;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $appUser;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $appUser;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO $appUser;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $appUser;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $appUser;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO $appUser;
+"@
+    # Многострочный SQL уходит файлом: Start-Process не кавычит аргументы,
+    # и psql получил бы каждое слово отдельным параметром.
+    $sqlFile = Join-Path $env:TEMP "nika-grant.sql"
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText($sqlFile, $grantSql, $utf8NoBom)
+    try {
+        # -w: без пароля psql не спрашивает его у скрытой консоли, а падает сразу.
+        $argString = '-X -w -P pager=off -h "{0}" -p {1} -U "{2}" -d "{3}" -v ON_ERROR_STOP=1 -q -f "{4}"' -f `
+            $HostDb, $Port, $SuperUser, $dbName, $sqlFile
+        $p = Start-Process -FilePath $psql -ArgumentList $argString -Wait -PassThru -NoNewWindow
+        if ($p.ExitCode -ne 0) {
+            throw "psql grant failed with exit code $($p.ExitCode)"
+        }
+    }
+    finally {
+        Remove-Item -LiteralPath $sqlFile -Force -ErrorAction SilentlyContinue
+    }
+}
+finally {
+    if ($null -eq $previousPgPassword) {
+        Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:PGPASSWORD = $previousPgPassword
+    }
+}
+
+Write-Host ("Done. Granted public schema privileges to {0} on database {1}." -f $appUser, $dbName)
