@@ -134,6 +134,8 @@ chmod 600 "$DEST/.env"
 if [[ -d "$DEST/static/images" ]]; then
   mkdir -p /var/www/nikacrm/images
   cp -r "$DEST/static/images/." /var/www/nikacrm/images/
+  # nginx работает от www-data — важно чтобы /var/www был доступен на чтение всем
+  chmod 755 /var/www
   chmod 755 /var/www/nikacrm /var/www/nikacrm/images
   find /var/www/nikacrm/images -type d -exec chmod 755 {} \;
   find /var/www/nikacrm/images -type f -exec chmod 644 {} \;
