@@ -142,6 +142,16 @@ if [[ -d "$DEST/static/images" ]]; then
   echo "Логотипы скопированы в /var/www/nikacrm/images/ (права выставлены)"
 fi
 
+# Сайт-визитка: копируем static/site/* в /var/www/profi-service/
+if [[ -d "$DEST/static/site" ]]; then
+  mkdir -p /var/www/profi-service
+  cp -r "$DEST/static/site/." /var/www/profi-service/
+  chmod 755 /var/www /var/www/profi-service
+  find /var/www/profi-service -type d -exec chmod 755 {} \;
+  find /var/www/profi-service -type f -exec chmod 644 {} \;
+  echo "Сайт-визитка развёрнута в /var/www/profi-service/"
+fi
+
 cd "$DEST"
 ./venv/bin/python scripts/run_migrations.py
 

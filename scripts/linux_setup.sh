@@ -140,8 +140,9 @@ fi
 
 if [[ "$WITH_LAN" == "1" && "$WITH_NGINX" != "1" ]]; then
   if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -qi "Status: active"; then
-    ufw allow 5000/tcp || LOG "WARN: не удалось открыть 5000/tcp в ufw"
-    LOG "ufw: allow 5000/tcp"
+    ufw allow 80/tcp || LOG "WARN: не удалось открыть 80/tcp в ufw"
+    ufw allow 8080/tcp || LOG "WARN: не удалось открыть 8080/tcp в ufw"
+    LOG "ufw: allow 80/tcp, 8080/tcp"
   fi
 fi
 
@@ -171,6 +172,14 @@ server {
 }
 EOF
   ln -sfn /etc/nginx/sites-available/nikacrm /etc/nginx/sites-enabled/nikacrm
+
+  # Сайт-визитка на порту 8080
+  if [[ -f "$DEST/deploy/nginx/profi-service.conf" ]]; then
+    cp "$DEST/deploy/nginx/profi-service.conf" /etc/nginx/sites-available/profi-service
+    ln -sfn /etc/nginx/sites-available/profi-service /etc/nginx/sites-enabled/profi-service
+    LOG "nginx: сайт-визитка :8080 → /var/www/profi-service"
+  fi
+
   rm -f /etc/nginx/sites-enabled/default
   nginx -t && systemctl enable --now nginx && systemctl reload nginx
   LOG "nginx: proxy :80 → 127.0.0.1:5000"
