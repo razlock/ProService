@@ -53,13 +53,13 @@ h1, h2, h3 { line-height: 1.25; margin: 0 0 .5em; }
   text-align: center;
   margin-bottom: 8px;
 }
-.section-title::after {
+.section-title::before {
   content: "";
   display: block;
   width: 64px; height: 4px;
   border-radius: 4px;
   background: linear-gradient(90deg, var(--accent), var(--accent-strong));
-  margin: 14px auto 0;
+  margin: 0 auto 14px;
 }
 .section-subtitle {
   text-align: center;
@@ -131,7 +131,7 @@ h1, h2, h3 { line-height: 1.25; margin: 0 0 .5em; }
   text-decoration: none !important;
 }
 .logo-img {
-  height: 120px;
+  height: 72px;
   width: auto;
   border-radius: 8px;
 }
@@ -277,21 +277,6 @@ h1, h2, h3 { line-height: 1.25; margin: 0 0 .5em; }
   border-radius: 50%;
   animation: pulse 2.4s ease-out infinite;
 }
-.float-card {
-  position: absolute;
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 16px;
-  font-weight: 700;
-  font-size: .85rem;
-  box-shadow: var(--shadow);
-}
-.float-card-1 { top: 8%;  left: -30px; animation: floaty 6s .6s ease-in-out infinite; }
-.float-card-2 { top: 32%; right: -30px; animation: floaty 6s 1.2s ease-in-out infinite; }
-.float-card-3 { top: 52%; left: -30px; animation: floaty 6s 1.8s ease-in-out infinite; }
-.float-card-4 { top: 76%; right: -30px; animation: floaty 6s 2.4s ease-in-out infinite; }
 
 @keyframes floaty {
   0%, 100% { transform: translateY(0); }
@@ -675,3 +660,31 @@ h1, h2, h3 { line-height: 1.25; margin: 0 0 .5em; }
   display: block;
   border-radius: 50%;
 }
+
+/* Иконка локации в заголовках филиалов */
+.loc-icon {
+  width: 22px;
+  height: 22px;
+  vertical-align: -4px;
+  display: inline-block;
+}
+
+
+/* ============ Плавающие плашки у телефона ============ */
+
+
+/* ============ Плавающие плашки у телефона ============ */
+.float-card {
+  position: absolute;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: .85rem;
+  box-shadow: var(--shadow);
+}
+.float-card-1 { top: 8%;  left: -22.5px; animation: floaty 4s .6s ease-in-out infinite; }
+.float-card-2 { top: 32%; right: -30px; animation: floaty 4s 1.2s ease-in-out infinite; }
+.float-card-4 { top: 63.3%; left: -22.5px; animation: floaty 4s 1.8s ease-in-out infinite; }
