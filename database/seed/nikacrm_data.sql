@@ -4412,6 +4412,17 @@ COPY public.action_logs (id, user_id, username, action_type, entity_type, entity
 1781	\N	system	clear	cache	\N	\N	\N	{"entries_cleared": 0, "key_prefix": "print_template", "description": "\\u041e\\u0447\\u0438\\u0449\\u0435\\u043d \\u043a\\u044d\\u0448 \\u0441 \\u043f\\u0440\\u0435\\u0444\\u0438\\u043a\\u0441\\u043e\\u043c 'print_template'"}	\N	\N	2026-09-28 18:19:05
 1782	8	ProfiService	update	print_template	\N	\N	\N	{"template_type": "customer", "name": "\\u041a\\u0432\\u0438\\u0442\\u0430\\u043d\\u0446\\u0438\\u044f \\u0434\\u043b\\u044f \\u043a\\u043b\\u0438\\u0435\\u043d\\u0442\\u0430 \\u2014 \\u041d\\u043e\\u0432\\u044b\\u0439 \\u0433\\u043e\\u0440\\u043e\\u0434", "content_length": 5324, "description": "\\u041e\\u0431\\u043d\\u043e\\u0432\\u043b\\u0435\\u043d \\u0448\\u0430\\u0431\\u043b\\u043e\\u043d \\u043f\\u0435\\u0447\\u0430\\u0442\\u0438: \\u041a\\u0432\\u0438\\u0442\\u0430\\u043d\\u0446\\u0438\\u044f \\u0434\\u043b\\u044f \\u043a\\u043b\\u0438\\u0435\\u043d\\u0442\\u0430 \\u2014 \\u041d\\u043e\\u0432\\u044b\\u0439 \\u0433\\u043e\\u0440\\u043e\\u0434 (customer)"}	\N	\N	2026-09-28 18:19:05
 1783	8	ProfiService	update	print_template	\N	\N	\N	{"template_type": "customer", "branch_id": 1, "description": "\\u0418\\u0437\\u043c\\u0435\\u043d\\u0451\\u043d \\u0448\\u0430\\u0431\\u043b\\u043e\\u043d \\u043f\\u0435\\u0447\\u0430\\u0442\\u0438: customer"}	\N	\N	2026-09-28 18:19:05
+1784	8	ProfiService	login_success	staff_auth	8	\N	\N	{"ip": "201.10.76.42", "username_mask": "Pr***", "branch_id": 1, "remember_me": false, "description": "\\u0423\\u0441\\u043f\\u0435\\u0448\\u043d\\u044b\\u0439 \\u0432\\u0445\\u043e\\u0434 staff (Pr***) \\u0432 \\u0442\\u043e\\u0447\\u043a\\u0443 #1"}	\N	\N	2026-10-02 16:14:18
+1785	8	ProfiService	login_success	staff_auth	8	\N	\N	{"ip": "201.10.76.21", "username_mask": "Pr***", "branch_id": 1, "remember_me": false, "description": "\\u0423\\u0441\\u043f\\u0435\\u0448\\u043d\\u044b\\u0439 \\u0432\\u0445\\u043e\\u0434 staff (Pr***) \\u0432 \\u0442\\u043e\\u0447\\u043a\\u0443 #1"}	\N	\N	2026-10-02 16:45:43
+1786	8	ProfiService	create	customer_portal_password	29	\N	\N	{"customer_id": 29, "customer_name": "\\u0425\\u0435\\u0440\\u043e\\u0432 \\u041c\\u0430\\u0445\\u043e\\u0440 \\u0425\\u0430\\u0440\\u043e\\u043c\\u043e\\u0432\\u0438\\u0447", "customer_phone": "77898989800", "note": "Plaintext \\u043f\\u0430\\u0440\\u043e\\u043b\\u044f \\u043d\\u0435 \\u0445\\u0440\\u0430\\u043d\\u0438\\u0442\\u0441\\u044f. Staff \\u0432\\u0438\\u0434\\u0438\\u0442 \\u0435\\u0433\\u043e \\u043e\\u0434\\u0438\\u043d \\u0440\\u0430\\u0437 \\u043f\\u0440\\u0438 \\u0441\\u043e\\u0437\\u0434\\u0430\\u043d\\u0438\\u0438/\\u0441\\u0431\\u0440\\u043e\\u0441\\u0435.", "description": "\\u0421\\u0433\\u0435\\u043d\\u0435\\u0440\\u0438\\u0440\\u043e\\u0432\\u0430\\u043d \\u043f\\u0430\\u0440\\u043e\\u043b\\u044c \\u043f\\u043e\\u0440\\u0442\\u0430\\u043b\\u0430 \\u0434\\u043b\\u044f \\u043a\\u043b\\u0438\\u0435\\u043d\\u0442\\u0430 \\u0425\\u0435\\u0440\\u043e\\u0432 \\u041c\\u0430\\u0445\\u043e\\u0440 \\u0425\\u0430\\u0440\\u043e\\u043c\\u043e\\u0432\\u0438\\u0447"}	\N	\N	2026-10-02 16:58:35
+1787	\N	system	clear	cache	\N	\N	\N	{"entries_cleared": 0, "key_prefix": "device", "description": "\\u041e\\u0447\\u0438\\u0449\\u0435\\u043d \\u043a\\u044d\\u0448 \\u0441 \\u043f\\u0440\\u0435\\u0444\\u0438\\u043a\\u0441\\u043e\\u043c 'device'"}	\N	\N	2026-10-02 16:58:35
+1788	8	ProfiService	create	device	29	\N	\N	{"\\u041a\\u043b\\u0438\\u0435\\u043d\\u0442": "\\u0425\\u0435\\u0440\\u043e\\u0432 \\u041c\\u0430\\u0445\\u043e\\u0440 \\u0425\\u0430\\u0440\\u043e\\u043c\\u043e\\u0432\\u0438\\u0447", "\\u0422\\u0438\\u043f \\u0443\\u0441\\u0442\\u0440\\u043e\\u0439\\u0441\\u0442\\u0432\\u0430": "\\u0421\\u043c\\u0430\\u0440\\u0442\\u0444\\u043e\\u043d", "\\u0411\\u0440\\u0435\\u043d\\u0434": "Redmi", "\\u0421\\u0435\\u0440\\u0438\\u0439\\u043d\\u044b\\u0439 \\u043d\\u043e\\u043c\\u0435\\u0440": "\\u041d\\u0435 \\u0443\\u043a\\u0430\\u0437\\u0430\\u043d"}	\N	\N	2026-10-02 16:58:35
+1789	8	\N	create	order	26	\N	\N	{"UUID \\u0437\\u0430\\u044f\\u0432\\u043a\\u0438": "71dbe7f7-ac67-41d5-902e-5588b8e6f3c1", "\\u041a\\u043b\\u0438\\u0435\\u043d\\u0442": "\\u0425\\u0435\\u0440\\u043e\\u0432 \\u041c\\u0430\\u0445\\u043e\\u0440 \\u0425\\u0430\\u0440\\u043e\\u043c\\u043e\\u0432\\u0438\\u0447", "\\u0423\\u0441\\u0442\\u0440\\u043e\\u0439\\u0441\\u0442\\u0432\\u043e": "\\u0421\\u043c\\u0430\\u0440\\u0442\\u0444\\u043e\\u043d Redmi", "\\u0421\\u0435\\u0440\\u0438\\u0439\\u043d\\u044b\\u0439 \\u043d\\u043e\\u043c\\u0435\\u0440": null, "\\u0421\\u0442\\u0430\\u0442\\u0443\\u0441": "\\u041d\\u043e\\u0432\\u044b\\u0439", "\\u041c\\u0435\\u043d\\u0435\\u0434\\u0436\\u0435\\u0440": "Manager", "\\u041c\\u0430\\u0441\\u0442\\u0435\\u0440": "\\u041c\\u0438\\u0445\\u0430\\u0438\\u043b"}	\N	\N	2026-10-02 16:58:35
+1790	8	\N	create	customer	29	\N	\N	{"name": "\\u0425\\u0435\\u0440\\u043e\\u0432 \\u041c\\u0430\\u0445\\u043e\\u0440 \\u0425\\u0430\\u0440\\u043e\\u043c\\u043e\\u0432\\u0438\\u0447", "phone": "77898989800", "email": "\\u041d\\u0435 \\u0443\\u043a\\u0430\\u0437\\u0430\\u043d"}	\N	\N	2026-10-02 16:58:35
+1791	\N	system	clear	cache	\N	\N	\N	{"entries_cleared": 0, "key_prefix": "order", "description": "\\u041e\\u0447\\u0438\\u0449\\u0435\\u043d \\u043a\\u044d\\u0448 \\u0441 \\u043f\\u0440\\u0435\\u0444\\u0438\\u043a\\u0441\\u043e\\u043c 'order'"}	\N	\N	2026-10-02 16:58:35
+1792	\N	system	clear	cache	\N	\N	\N	{"entries_cleared": 0, "key_prefix": "customer", "description": "\\u041e\\u0447\\u0438\\u0449\\u0435\\u043d \\u043a\\u044d\\u0448 \\u0441 \\u043f\\u0440\\u0435\\u0444\\u0438\\u043a\\u0441\\u043e\\u043c 'customer'"}	\N	\N	2026-10-02 16:58:35
+1793	\N	system	clear	cache	\N	\N	\N	{"entries_cleared": 0, "key_prefix": "finance", "description": "\\u041e\\u0447\\u0438\\u0449\\u0435\\u043d \\u043a\\u044d\\u0448 \\u0441 \\u043f\\u0440\\u0435\\u0444\\u0438\\u043a\\u0441\\u043e\\u043c 'finance'"}	\N	\N	2026-10-02 16:58:35
+1794	8	ProfiService	login_success	staff_auth	8	\N	\N	{"ip": "176.116.141.1", "username_mask": "Pr***", "branch_id": 1, "remember_me": false, "description": "\\u0423\\u0441\\u043f\\u0435\\u0448\\u043d\\u044b\\u0439 \\u0432\\u0445\\u043e\\u0434 staff (Pr***) \\u0432 \\u0442\\u043e\\u0447\\u043a\\u0443 #1"}	\N	\N	2026-10-04 00:52:15
 \.
 
 
@@ -4543,6 +4554,7 @@ COPY public.customers (id, name, phone, email, created_at, updated_at, wallet_ce
 28	МАШТАКОВ M A	79020032026		2026-09-24 15:09:53.916659	2026-09-24 15:09:53.916659	0	0	1	scrypt:32768:8:1$siXIrFTbGQUxYscJ$c8b2ca7c9a85b6baafc9a09096ad254e20a70eb07d99ecf7f457a5b9971e8f1e4cc2cad6871933408be2998b19da60d87316a1888881630a1d2fac3535620ac7	person	\N	\N	\N	\N	\N	\N	\N	\N	\N
 22	Петров Новый город	78888888888	\N	2026-09-20 21:18:43.919816	2026-09-28 16:17:52.573056	0	0	1	scrypt:32768:8:1$ZIBlRQ7x7p8GYteG$0704aae80c0ca8cb737e2d5e4411929c465fc510d874946d04c5cfc0a7f7366e03ed0a284ba89fb317c9be30ccbd495497388804e3ac707fcc323f3cf7e14226	person									
 21	Иванов Верхняя	79999999999	\N	2026-09-20 21:16:42.507533	2026-09-28 16:18:21.712527	0	0	1	scrypt:32768:8:1$3S0t753WNxndet6s$5ddaf0080c46788eadf4d94c8a9cefd8d5ef55d9a2ca3575dcee0c333b80821a2404b915ae72966ae27f46958e3ffe08b9690595f40ce979d7c6898ca6c4743e	person									
+29	Херов Махор Харомович	77898989800		2026-10-02 14:58:35.48608	2026-10-02 14:58:35.48608	0	0	1	scrypt:32768:8:1$jEhFBKZeZWeQuXDt$915e529bf8561702f316374e89a513e12fdc582d7e15b93d233f5245c02e0861b3bd003ae84bae786f523da70622bc9cbf879792b5ab9926898e07b8fb7e609e	person	\N	\N	\N	\N	\N	\N	\N	\N	\N
 \.
 
 
@@ -4754,6 +4766,7 @@ COPY public.devices (id, customer_id, device_type_id, device_brand_id, serial_nu
 26	26	18	319	\N	2026-09-24 15:03:38.599154	\N	Разбит экран	Бывший в употреблении, Следы эксплуатации, мелкие царапины, потертости	\N
 27	27	18	290	\N	2026-09-24 15:06:45.163077	\N	Разбит экран	Бывший в употреблении, Аппарат, Следы эксплуатации, мелкие царапины, потертости	\N
 28	28	18	286	\N	2026-09-24 15:09:54.1767	\N	Цикличная перезагрузка, Нет запуска системы	Бывший в употреблении, Следы эксплуатации, мелкие царапины, потертости	\N
+29	29	18	319	\N	2026-10-02 14:58:35.730839	2123	Разбит экран, Не заряжается	Бывший в употреблении, Аппарат, Разбита задняя крышка	\N
 \.
 
 
@@ -5173,6 +5186,9 @@ COPY public.order_appearance_tags (id, order_id, appearance_tag_id, created_at) 
 130	25	17	2026-09-24 15:09:54.197665
 131	25	18	2026-09-24 15:09:54.197665
 132	25	19	2026-09-24 15:09:54.197665
+133	26	16	2026-10-02 14:58:35.767822
+134	26	8	2026-10-02 14:58:35.767822
+135	26	3	2026-10-02 14:58:35.767822
 \.
 
 
@@ -5608,6 +5624,7 @@ COPY public.order_status_history (id, order_id, old_status_id, new_status_id, ch
 133	25	\N	3	8	\N	Создание заявки	2026-09-24 16:09:54
 134	25	3	12	8	ProfiService	Изменение статуса	2026-09-24 16:10:38
 135	25	12	2	8	ProfiService	Изменение статуса	2026-09-28 11:14:24
+136	26	\N	3	8	\N	Создание заявки	2026-10-02 16:58:35
 \.
 
 
@@ -5664,6 +5681,8 @@ COPY public.order_symptoms (id, order_id, symptom_id, created_at) FROM stdin;
 41	24	5	2026-09-24 15:06:45.182425
 42	25	20	2026-09-24 15:09:54.197665
 43	25	21	2026-09-24 15:09:54.197665
+44	26	5	2026-10-02 14:58:35.767822
+45	26	10	2026-10-02 14:58:35.767822
 \.
 
 
@@ -5710,6 +5729,7 @@ COPY public.orders (id, order_id, device_id, customer_id, manager_id, master_id,
 23	e1ad5de5-13d8-4162-8b92-b5aff688f11b	26	26	7	6	новый	0.0	4700.0	\N	Бывший в употреблении, Следы эксплуатации, мелкие царапины, потертости	\N	2026-09-24 16:03:38	2026-09-24 16:05:07	Разбит экран	\N	1	0	Note 14 pro	238	0	0	\N	\N	\N	Нужно вытащить данные	1
 24	0ec3c441-118a-442b-af05-61470e1611c7	27	27	7	5	новый	0.0	2800.0	\N	Бывший в употреблении, Аппарат, Следы эксплуатации, мелкие царапины, потертости	\N	2026-09-24 16:06:44	2026-09-24 16:07:52	Разбит экран	\N	1	0	Galaxy A11	204	0	0	\N	\N	\N	разбит дисплей	1
 25	c0c3815f-b1bd-434b-9818-a82b496176c3	28	28	7	7	новый	0.0	0.0	\N	Бывший в употреблении, Следы эксплуатации, мелкие царапины, потертости	\N	2026-09-24 16:09:53	2026-09-28 11:14:24	Цикличная перезагрузка, Нет запуска системы	\N	2	0	Gt3	239	0	0	\N	\N	\N	Требуется прошивка аппарата с потерей данных	1
+26	71dbe7f7-ac67-41d5-902e-5588b8e6f3c1	29	29	7	6	новый	0.0	23000.0	2123	Бывший в употреблении, Аппарат, Разбита задняя крышка	Клиент Чорт	2026-10-02 16:58:35	2026-10-02 14:58:35.767822	Разбит экран, Не заряжается	\N	3	0	Galaxy S22	145	0	0	\N	\N	\N	\N	1
 \.
 
 
@@ -6170,7 +6190,7 @@ COPY public.users (id, username, password_hash, role, created_at, last_login, is
 12	master@master.ru	scrypt:32768:8:1$Au9A6eVblB6B3bgG$74b7db96c8dcf9d1bbb7b908be6a56ad5ba99a122a8126ff69df12d6991fa2bdcd8362f305bd0bbe4be1a55b8e349f19ea1f749d848d695e658afdcd9a011e9a	master_6	2026-09-07 14:27:15.10084	2026-09-28 10:06:40.328447	1	Михаил	\N
 13	master0@master.ru	scrypt:32768:8:1$n0m77lfiWxpMe6Y9$ff98ec86667f1f1644de25d4e3034d0fbaaddc7dd53e6589c012a3dc28b56707cf9cd868e9cd55d7b4649ef6448da6d60cd111a38ab63152826c137272dfdfa4	master_7	2026-09-08 18:48:08.130856	\N	1	Артём	\N
 10	forsale001@mail.ru	scrypt:32768:8:1$D8pYLCV3AZcO2JK1$a351f7d42f91323dd48123dfbd78378069c2d5517ef37c01faa46737075768079dd92b6a09dbcf87bac0e8a720b9e24ab510a8cdc675c632042347e5322ed68f	master	2026-04-07 20:10:55.11334	2026-09-20 21:17:53.831487	1	Виталий	\N
-8	ProfiService	scrypt:32768:8:1$o7dzlfnteWknGJyK$53998f17e2bf9ed5b9115cbe8cb3250740c8b13998fbf778820451cd9f2ed16ee70bdb23b4607a298641ebb5b0be82d812357b6f57517fdd038fa4421bee90d7	admin	2026-04-07 20:10:55.11334	2026-09-28 15:25:18.448371	1	Admin	\N
+8	ProfiService	scrypt:32768:8:1$o7dzlfnteWknGJyK$53998f17e2bf9ed5b9115cbe8cb3250740c8b13998fbf778820451cd9f2ed16ee70bdb23b4607a298641ebb5b0be82d812357b6f57517fdd038fa4421bee90d7	admin	2026-04-07 20:10:55.11334	2026-10-03 22:52:15.385977	1	Admin	\N
 \.
 
 
@@ -6186,7 +6206,7 @@ COPY public.warehouse_logs (id, operation_type, part_id, part_name, part_number,
 -- Name: action_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.action_logs_id_seq', 1783, true);
+SELECT pg_catalog.setval('public.action_logs_id_seq', 1794, true);
 
 
 --
@@ -6235,7 +6255,7 @@ SELECT pg_catalog.setval('public.customer_wallet_transactions_id_seq', 1, false)
 -- Name: customers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.customers_id_seq', 28, true);
+SELECT pg_catalog.setval('public.customers_id_seq', 29, true);
 
 
 --
@@ -6263,7 +6283,7 @@ SELECT pg_catalog.setval('public.device_types_id_seq', 63, true);
 -- Name: devices_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.devices_id_seq', 28, true);
+SELECT pg_catalog.setval('public.devices_id_seq', 29, true);
 
 
 --
@@ -6347,7 +6367,7 @@ SELECT pg_catalog.setval('public.notifications_id_seq', 352, true);
 -- Name: order_appearance_tags_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.order_appearance_tags_id_seq', 132, true);
+SELECT pg_catalog.setval('public.order_appearance_tags_id_seq', 135, true);
 
 
 --
@@ -6410,7 +6430,7 @@ SELECT pg_catalog.setval('public.order_services_id_seq', 27, true);
 -- Name: order_status_history_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.order_status_history_id_seq', 135, true);
+SELECT pg_catalog.setval('public.order_status_history_id_seq', 136, true);
 
 
 --
@@ -6424,7 +6444,7 @@ SELECT pg_catalog.setval('public.order_statuses_id_seq', 14, true);
 -- Name: order_symptoms_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.order_symptoms_id_seq', 43, true);
+SELECT pg_catalog.setval('public.order_symptoms_id_seq', 45, true);
 
 
 --
@@ -6445,7 +6465,7 @@ SELECT pg_catalog.setval('public.order_visibility_history_id_seq', 1, false);
 -- Name: orders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.orders_id_seq', 25, true);
+SELECT pg_catalog.setval('public.orders_id_seq', 26, true);
 
 
 --
