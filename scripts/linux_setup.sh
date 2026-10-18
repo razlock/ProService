@@ -10,7 +10,7 @@
 #   sudo bash scripts/linux_setup.sh
 #   sudo bash scripts/linux_setup.sh --with-nginx
 #   sudo bash scripts/linux_setup.sh --harden
-#   DEST=/opt/nika-crm REPO_URL=https://github.com/nika-sc/Nika-Service-CRM.git sudo bash scripts/linux_setup.sh
+#   DEST=/opt/nika-crm REPO_URL=https://github.com/razlock/ProService.git sudo bash scripts/linux_setup.sh
 #   sudo bash scripts/linux_setup.sh --from-dir /path/to/already/cloned
 #
 # После установки: systemd unit nikacrm, демо-БД (если пустая), .env, печать URL и логинов.
@@ -24,7 +24,7 @@ WITH_LAN=0
 WITH_HARDEN=0
 FORCE_NGINX=0
 FROM_DIR=""
-REPO_URL="${REPO_URL:-https://github.com/nika-sc/Nika-Service-CRM.git}"
+REPO_URL="${REPO_URL:-https://github.com/razlock/ProService.git}"
 BRANCH="${BRANCH:-main}"
 DEST="${DEST:-/root/Nika-Service-CRM}"
 
@@ -140,8 +140,9 @@ fi
 
 if [[ "$WITH_LAN" == "1" && "$WITH_NGINX" != "1" ]]; then
   if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -qi "Status: active"; then
-    ufw allow 5000/tcp || LOG "WARN: не удалось открыть 5000/tcp в ufw"
-    LOG "ufw: allow 5000/tcp"
+    ufw allow 80/tcp || LOG "WARN: не удалось открыть 80/tcp в ufw"
+    ufw allow 8080/tcp || LOG "WARN: не удалось открыть 8080/tcp в ufw"
+    LOG "ufw: allow 80/tcp, 8080/tcp"
   fi
 fi
 
@@ -154,6 +155,12 @@ server {
     listen [::]:80 default_server;
     server_name _;
     client_max_body_size 32m;
+    location /images/ {
+        alias /var/www/nikacrm/images/;
+        autoindex off;
+        expires 7d;
+    }
+
     location / {
         proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host \$host;
@@ -165,6 +172,14 @@ server {
 }
 EOF
   ln -sfn /etc/nginx/sites-available/nikacrm /etc/nginx/sites-enabled/nikacrm
+
+  # Сайт-визитка на порту 8080
+  if [[ -f "$DEST/deploy/nginx/profi-service.conf" ]]; then
+    cp "$DEST/deploy/nginx/profi-service.conf" /etc/nginx/sites-available/profi-service
+    ln -sfn /etc/nginx/sites-available/profi-service /etc/nginx/sites-enabled/profi-service
+    LOG "nginx: сайт-визитка :8080 → /var/www/profi-service"
+  fi
+
   rm -f /etc/nginx/sites-enabled/default
   nginx -t && systemctl enable --now nginx && systemctl reload nginx
   LOG "nginx: proxy :80 → 127.0.0.1:5000"
