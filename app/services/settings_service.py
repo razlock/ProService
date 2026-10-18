@@ -156,7 +156,7 @@ class SettingsService:
                         d['mail_username'] = os.environ.get('MAIL_USERNAME', '')
                     if not d.get('mail_default_sender') and os.environ.get('MAIL_DEFAULT_SENDER'):
                         d['mail_default_sender'] = os.environ.get('MAIL_DEFAULT_SENDER', '')
-                    # Демо-дамп: «Nika CRM Demo <noreply@example.com>» — в форме показывать логин.
+                    # Демо-дамп: «Profi Service Demo <noreply@example.com>» — в форме показывать логин.
                     try:
                         from email.utils import parseaddr
                         from app.services.notification_service import _is_placeholder_sender_email
@@ -695,12 +695,23 @@ class SettingsService:
             raise DatabaseError(f"Не удалось сохранить настройки НДС: {e}")
     
     @staticmethod
-    def _get_print_template_impl(template_type: str) -> Optional[Dict]:
-        """Чтение шаблона печати из БД без кэша (для страницы заказа — всегда актуальный из настроек)."""
+    def _get_print_template_impl(template_type: str, branch_id: Optional[int] = None) -> Optional[Dict]:
+        """Чтение шаблона печати из БД без кэша; если есть шаблон филиала — берёт его, иначе общий."""
         try:
             with get_db_connection(row_factory=sqlite3.Row) as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT * FROM print_templates WHERE template_type = ?", (template_type,))
+                if branch_id is not None:
+                    cursor.execute(
+                        "SELECT * FROM print_templates WHERE template_type = ? AND branch_id = ? LIMIT 1",
+                        (template_type, int(branch_id)),
+                    )
+                    template = cursor.fetchone()
+                    if template:
+                        return dict(template)
+                cursor.execute(
+                    "SELECT * FROM print_templates WHERE template_type = ? AND branch_id IS NULL LIMIT 1",
+                    (template_type,),
+                )
                 template = cursor.fetchone()
                 if template:
                     return dict(template)
@@ -724,12 +735,12 @@ class SettingsService:
         return SettingsService._get_print_template_impl(template_type)
 
     @staticmethod
-    def get_print_template_fresh(template_type: str = 'customer') -> Optional[Dict]:
+    def get_print_template_fresh(template_type: str = 'customer', branch_id: Optional[int] = None) -> Optional[Dict]:
         """
-        Получает шаблон печати из БД без кэша. Использовать на странице заказа,
-        чтобы всегда подхватывать шаблон из настроек «Формы для печати».
+        Получает шаблон печати из БД без кэша. Если указан branch_id и для филиала есть свой шаблон,
+        возвращает филиальный шаблон, иначе общий.
         """
-        return SettingsService._get_print_template_impl(template_type)
+        return SettingsService._get_print_template_impl(template_type, branch_id)
     
     @staticmethod
     def save_print_template(template_type: str, html_content: str, name: Optional[str] = None) -> bool:

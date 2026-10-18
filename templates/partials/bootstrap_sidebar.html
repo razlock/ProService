@@ -1,8 +1,8 @@
 <!-- Bootstrap 5 Sidebar (no-print: скрывать при печати) -->
 <div class="bootstrap-sidebar d-flex flex-column flex-shrink-0 bg-light no-print" style="width: 5.5rem; position: fixed; left: 0; top: 44px; height: calc(100vh - 44px); z-index: 1020;">
-    <a href="{{ url_for('main.home') }}" class="sidebar-brand-link nav-link d-flex flex-column align-items-center justify-content-center p-3 py-2 border-bottom text-decoration-none text-center{% if request.path == '/' %} active{% endif %}" title="Nika CRM">
+    <a href="{{ url_for('main.home') }}" class="sidebar-brand-link nav-link d-flex flex-column align-items-center justify-content-center p-3 py-2 border-bottom text-decoration-none text-center{% if request.path == '/' %} active{% endif %}" title="Profi Service">
         <i class="fas fa-tachometer-alt" style="font-size: 1.5rem; display: block; text-align: center;"></i>
-        <small class="mt-1" style="font-size: 0.65rem; line-height: 1; display: block; text-align: center;">Nika CRM</small>
+        <small class="mt-1" style="font-size: 0.65rem; line-height: 1; display: block; text-align: center;">Profi Service</small>
     </a>
     <ul class="nav nav-pills nav-flush flex-column flex-grow-1">
         {% if has_any_permission('view_orders', 'create_orders', 'edit_orders', 'delete_orders') %}
@@ -96,6 +96,21 @@
                 {% if has_permission('manage_users') %}
                 <li><a class="dropdown-item" href="{{ url_for('main.settings') }}">Настройки</a></li>
                 {% endif %}
+                {% if current_user.is_authenticated and current_user.role == 'admin' and g.all_branches %}
+                <li class="px-3 py-2">
+                    <small class="text-muted d-block mb-1"><i class="fas fa-map-marker-alt me-1"></i>Текущая точка:</small>
+                    <form action="{{ url_for('main.switch_branch') }}" method="POST" class="m-0">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <select name="branch_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                            {% for b in g.all_branches %}
+                            <option value="{{ b.id }}" {% if b.id == session.get('branch_id')|int %}selected{% endif %}>
+                                {{ b.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </li>
+                {% endif %}
                 <li><hr class="dropdown-divider"></li>
                 <li>
                     <form method="POST" action="{{ url_for('main.logout') }}" class="m-0">
@@ -177,7 +192,7 @@
     text-align: center;
 }
 
-/* Название Nika CRM в топе — оранжевый цвет */
+/* Название Profi Service в топе — оранжевый цвет */
 .bootstrap_sidebar .sidebar-brand-link,
 .bootstrap_sidebar .sidebar-brand-link small,
 .bootstrap_sidebar .sidebar-brand-link i {

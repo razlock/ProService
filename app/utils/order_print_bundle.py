@@ -49,11 +49,42 @@ def render_order_print_templates(
     """Return rendered HTML for customer / sales_receipt / work_act (or None)."""
     result = {"customer": None, "sales_receipt": None, "work_act": None}
     try:
-        tpl = SettingsService.get_print_template("customer")
+        order_obj_pre = order_data.get("order") or {}
+        branch_id_raw = getattr(order, "branch_id", None)
+        if branch_id_raw is None:
+            branch_id_raw = order_obj_pre.get("branch_id")
+        try:
+            branch_id = int(branch_id_raw) if branch_id_raw not in (None, "", 0) else None
+        except Exception:
+            branch_id = None
+
+        branch_info = None
+        if branch_id is not None:
+            try:
+                from app.database.connection import get_db_connection
+                with get_db_connection() as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "SELECT id, name, address, phone, logo_url FROM branches WHERE id = ?",
+                        (branch_id,),
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        branch_info = {
+                            "id": row[0],
+                            "name": row[1],
+                            "address": row[2],
+                            "phone": row[3],
+                            "logo_url": row[4],
+                        }
+            except Exception:
+                branch_info = None
+
+        tpl = SettingsService.get_print_template_fresh("customer", branch_id)
         html_content = (tpl or {}).get("html_content") if isinstance(tpl, dict) else None
-        sales_tpl = SettingsService.get_print_template("sales_receipt")
+        sales_tpl = SettingsService.get_print_template_fresh("sales_receipt", branch_id)
         sales_html = (sales_tpl or {}).get("html_content") if isinstance(sales_tpl, dict) else None
-        work_tpl = SettingsService.get_print_template("work_act")
+        work_tpl = SettingsService.get_print_template_fresh("work_act", branch_id)
         work_html = (work_tpl or {}).get("html_content") if isinstance(work_tpl, dict) else None
         if not any(
             isinstance(chunk, str) and chunk.strip()
@@ -73,7 +104,7 @@ def render_order_print_templates(
         except (TypeError, ValueError):
             logo_max_height = 120
 
-        raw_logo_url = (settings.get("logo_url") or "").strip()
+        raw_logo_url = ((branch_info or {}).get("logo_url") or settings.get("logo_url") or "").strip()
         if raw_logo_url and re.match(r"^https?://", raw_logo_url, flags=re.IGNORECASE):
             logo_url = url_for("orders.print_logo_proxy", _external=True)
         elif raw_logo_url:
@@ -84,8 +115,8 @@ def render_order_print_templates(
         now = _dt.now()
         values = {
             "COMPANY_NAME": _safe(settings.get("org_name") or ""),
-            "branch.address": _safe(settings.get("address") or ""),
-            "branch.phone": _safe(settings.get("phone") or ""),
+            "branch.address": _safe((branch_info or {}).get("address") or settings.get("address") or ""),
+            "branch.phone": _safe((branch_info or {}).get("phone") or settings.get("phone") or ""),
             "COMPANY_REQUISITES": _safe(" ".join([
                 p for p in [
                     f"ИНН: {settings.get('inn')}" if settings.get("inn") else "",

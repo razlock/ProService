@@ -159,7 +159,7 @@ def _apply_mail_config_from_settings(app):
     )
     configured_sender = _get('mail_default_sender', 'MAIL_DEFAULT_SENDER', '') or app.config.get('MAIL_DEFAULT_SENDER', '')
     configured_sender = _strip_env_quotes(configured_sender)
-    # Демо-дамп кладёт «Nika CRM Demo <noreply@example.com>» — не использовать как From.
+    # Демо-дамп кладёт «Profi Service Demo <noreply@example.com>» — не использовать как From.
     _, sender_mailbox = parseaddr((configured_sender or '').strip())
     username = (app.config.get('MAIL_USERNAME') or '').strip()
     if _is_placeholder_sender_email(sender_mailbox) and username and '@' in username and not _is_placeholder_sender_email(username):

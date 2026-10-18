@@ -228,6 +228,21 @@ class OrderQueries:
                     where_clauses.append("o.created_at < date(?, '+1 day')")
                 params.append(filters['date_to'])
 
+        # ФИЛЬТРАЦИЯ ПО ТОЧКЕ (филиалу)
+        # Админы видят всё, остальные — только свою точку
+        try:
+            from flask import g
+            from flask_login import current_user
+
+            branch_id = getattr(g, 'branch_id', None)
+            if branch_id and current_user.is_authenticated:
+                user_role = getattr(current_user, 'role', 'viewer')
+                if user_role != 'admin':
+                    where_clauses.append('o.branch_id = ?')
+                    params.append(branch_id)
+        except Exception:
+            pass
+
         needs_search_joins = bool(filters and filters.get('search'))
         try:
             with get_db_connection() as conn:
@@ -370,6 +385,20 @@ class OrderQueries:
         try:
             with get_db_connection(row_factory=sqlite3.Row) as conn:
                 cursor = conn.cursor()
+
+                # ФИЛЬТРАЦИЯ ПО ТОЧКЕ (филиалу)
+                try:
+                    from flask import g
+                    from flask_login import current_user
+                    branch_id = getattr(g, 'branch_id', None)
+                    if branch_id and current_user.is_authenticated:
+                        user_role = getattr(current_user, 'role', 'viewer')
+                        if user_role != 'admin':
+                            where_clauses.append('o.branch_id = ?')
+                            params.append(branch_id)
+                except Exception:
+                    pass
+
                 where_clauses.append(OrderQueries._orders_not_deleted_clause(cursor, 'o'))
                 where_sql = 'WHERE ' + ' AND '.join(where_clauses)
                 

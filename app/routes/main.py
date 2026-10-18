@@ -151,6 +151,18 @@ def _login_page_extra():
         "windows_setup": _windows_setup_info(),
         "vps_referral": _vps_referral_info(),
     }
+    # Список активных филиалов (точек) для radio-переключателя на логине
+    try:
+        from app.database.connection import get_db_connection
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, name, address, color FROM branches WHERE is_active = TRUE ORDER BY id")
+            extra["branches"] = [
+                {'id': row[0], 'name': row[1], 'address': row[2], 'color': row[3]}
+                for row in cursor.fetchall()
+            ]
+    except Exception:
+        extra["branches"] = []
     try:
         from app.services.update_service import peek_cached_status
 
@@ -434,6 +446,11 @@ def login():
             flash('Введите имя пользователя и пароль', 'error')
             return _login_error_response()
 
+        branch_id = request.form.get('branch_id')
+        if not branch_id:
+            flash('Выберите точку (филиал)', 'error')
+            return _login_error_response()
+
         from app.utils.validators import password_eligible_for_verify
         if not password_eligible_for_verify(password):
             _register_login_failure(login_key, username)
@@ -476,6 +493,10 @@ def login():
                 user = User(user_dict)
                 remember_me = request.form.get('remember_me') in ('1', 'on', 'true', 'True')
                 session.clear()
+                try:
+                    session['branch_id'] = int(branch_id)
+                except (TypeError, ValueError):
+                    pass
                 session.permanent = True
                 login_user(user, remember=remember_me)
                 UserService.update_user_last_login(user.id)
@@ -552,6 +573,24 @@ def logout():
     if _public_landing_enabled():
         return redirect(url_for('main.home'))
     return redirect(url_for('main.login'))
+
+
+@bp.route('/switch-branch', methods=['POST'])
+@login_required
+def switch_branch():
+    """Переключение точки (филиала) без выхода из системы. Только для админов."""
+    if getattr(current_user, 'role', None) != 'admin':
+        flash('Переключение точек доступно только администраторам', 'error')
+        return redirect(request.referrer or url_for('main.home'))
+
+    branch_id = request.form.get('branch_id')
+    if branch_id:
+        try:
+            session['branch_id'] = int(branch_id)
+            flash('Точка переключена', 'success')
+        except (ValueError, TypeError):
+            flash('Некорректная точка', 'error')
+    return redirect(request.referrer or url_for('main.home'))
 
 
 @bp.route('/new')
@@ -955,8 +994,8 @@ def settings():
                     flash(
                         'Почта (SMTP) записана в настройки и в .env. '
                         'Чтобы служба точно подхватила новые MAIL_*, перезапустите сервер '
-                        'ярлыком на рабочем столе «Nika CRM — Перезапуск службы» '
-                        '(Nika CRM — Restart service). Затем повторите тест письма.',
+                        'ярлыком на рабочем столе «Profi Service — Перезапуск службы» '
+                        '(Profi Service — Restart service). Затем повторите тест письма.',
                         'warning',
                     )
             elif 'automation_settings' in request.form:

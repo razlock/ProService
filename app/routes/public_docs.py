@@ -21,28 +21,28 @@ logger = logging.getLogger(__name__)
 
 _PAGES = {
     "hub": {
-        "title": "Документация бесплатной Nika CRM — руководства без GitHub",
+        "title": "Документация бесплатной Profi Service — руководства без GitHub",
         "description": (
-            "Документация бесплатной open-source Nika CRM на демо-сайте: сценарий "
+            "Документация бесплатной open-source Profi Service на демо-сайте: сценарий "
             "рабочего дня со скриншотами, полное руководство и установка."
         ),
         "keywords": (
-            "документация Nika CRM, бесплатная CRM, руководство сервисный центр, "
+            "документация Profi Service, бесплатная CRM, руководство сервисный центр, "
             "сценарий рабочего дня, установка CRM, open source"
         ),
-        "heading": "Как работать в Nika CRM",
+        "heading": "Как работать в Profi Service",
         "nav": "hub",
         "path": "/docs",
     },
     "about": {
         "file": "ABOUT.md",
-        "title": "О проекте и установка бесплатной Nika CRM — Windows, Docker, демо",
+        "title": "О проекте и установка бесплатной Profi Service — Windows, Docker, демо",
         "description": (
             "Что умеет бесплатная open-source CRM для сервисных центров: Windows SETUP, "
             "Docker, быстрый старт и контакты поддержки."
         ),
         "keywords": (
-            "бесплатная CRM сервисный центр, open source CRM, Nika CRM установка, "
+            "бесплатная CRM сервисный центр, open source CRM, Profi Service установка, "
             "Windows SETUP, Docker CRM, о проекте Nika"
         ),
         "heading": "О проекте и установка",
@@ -51,13 +51,13 @@ _PAGES = {
     },
     "guide": {
         "file": "USER_GUIDE.md",
-        "title": "Руководство пользователя Nika CRM — заявки, диагностика, кабинет",
+        "title": "Руководство пользователя Profi Service — заявки, диагностика, кабинет",
         "description": (
             "Руководство Nika Service CRM 3.4: диагностика заявки, личный кабинет "
             "с фото и чеком, устройства, платежи, чат и заявки, склад, касса."
         ),
         "keywords": (
-            "руководство Nika CRM, диагностика заявки, личный кабинет клиента, "
+            "руководство Profi Service, диагностика заявки, личный кабинет клиента, "
             "печать чека, мои устройства, заявки ремонт, бесплатная CRM"
         ),
         "heading": "Руководство пользователя",
@@ -66,14 +66,14 @@ _PAGES = {
     },
     "walkthrough": {
         "file": "USER_WALKTHROUGH.md",
-        "title": "Сценарий рабочего дня в Nika CRM — от заявки до кассы",
+        "title": "Сценарий рабочего дня в Profi Service — от заявки до кассы",
         "description": (
             "Пошаговый сценарий бесплатной CRM: вход, создание заявки, услуги и товары, "
             "оплата, закрытие, зарплата и сведение кассы — со скриншотами."
         ),
         "keywords": (
             "сценарий рабочего дня CRM, заявка на ремонт, касса сервисный центр, "
-            "скриншоты Nika CRM, walkthrough"
+            "скриншоты Profi Service, walkthrough"
         ),
         "heading": "Пошаговый сценарий рабочего дня",
         "nav": "walkthrough",

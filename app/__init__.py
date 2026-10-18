@@ -332,6 +332,28 @@ def create_app(config_class=Config):
         session.permanent = True
         return None
 
+    @app.before_request
+    def set_branch_context():
+        """Устанавливает текущую точку (филиал) в g.branch_id для фильтрации данных."""
+        from flask import g, session
+        from flask_login import current_user
+        from app.database.connection import get_db_connection
+
+        if current_user.is_authenticated and session.get('branch_id'):
+            g.branch_id = int(session['branch_id'])
+        else:
+            g.branch_id = None
+
+        # Загружаем список всех активных точек для переключателя в шапке
+        g.all_branches = []
+        try:
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, name, color FROM branches WHERE is_active = TRUE ORDER BY id")
+                g.all_branches = [{'id': row[0], 'name': row[1], 'color': row[2]} for row in cursor.fetchall()]
+        except Exception:
+            pass
+
     # За nginx/proxy — корректные URL и HTTPS
     if not app.debug:
         from werkzeug.middleware.proxy_fix import ProxyFix
@@ -422,7 +444,7 @@ def create_app(config_class=Config):
         home_extra = (
             "    <image:image>\n"
             f"      <image:loc>{image_url}</image:loc>\n"
-            "      <image:title>Nika CRM — бесплатная CRM для сервисных центров</image:title>\n"
+            "      <image:title>Profi Service — бесплатная CRM для сервисных центров</image:title>\n"
             "    </image:image>\n"
         )
         blog_xml = ""
@@ -477,7 +499,7 @@ def create_app(config_class=Config):
             "Темная тема",
         ]
         walkthrough = [
-            ("01-login.png", "Вход в демо Nika CRM"),
+            ("01-login.png", "Вход в демо Profi Service"),
             ("02-dashboard.png", "Дашборд после входа"),
             ("03-add-order.png", "Форма новой заявки"),
             ("04-order-detail.png", "Карточка заявки"),
