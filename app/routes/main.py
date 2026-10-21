@@ -622,6 +622,19 @@ def home():
             )
         return redirect(url_for('main.login'))
 
+    # Мастерам и другим без прав на финансы/отчёты — сразу на заявки.
+    # Они не должны видеть сводный отчёт по компании (выручка, касса, прибыль).
+    try:
+        can_view_dashboard = (
+            UserService.check_permission(current_user.id, 'view_finance')
+            or UserService.check_permission(current_user.id, 'manage_finance')
+            or UserService.check_permission(current_user.id, 'view_reports')
+        )
+        if not can_view_dashboard:
+            return redirect(url_for('orders.all_orders'))
+    except Exception:
+        pass
+
     # Период: по умолчанию сегодня
     preset = request.args.get('preset', 'today')
     date_from, date_to = normalize_date_range(
