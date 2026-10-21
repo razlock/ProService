@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}Филиалы{% endblock %}
+
+{% block styles %}
+    <style>
+        .settings-container {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+        
+        .settings-sidebar {
+            width: 250px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 1.5rem 0;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .settings-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .settings-menu-item {
+            margin: 0.25rem 0;
+        }
+        
+        .settings-menu-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            color: #495057;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            position: relative;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .settings-menu-link:hover {
+            background: linear-gradient(90deg, rgba(0,123,255,0.08) 0%, rgba(0,123,255,0.02) 100%);
+            color: #007bff;
+            border-left-color: #007bff;
+            transform: translateX(4px);
+        }
+        
+        .settings-menu-link.active {
+            background: linear-gradient(90deg, rgba(0,123,255,0.12) 0%, rgba(0,123,255,0.04) 100%);
+            color: #007bff;
+            border-left-color: #007bff;
+            font-weight: 600;
+        }
+        
+        .settings-menu-link.active::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background: #007bff;
+            border-radius: 3px 0 0 3px;
+        }
+        
+        .settings-menu-link i {
+            width: 22px;
+            text-align: center;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .settings-menu-link:hover i,
+        .settings-menu-link.active i {
+            transform: scale(1.15);
+        }
+        
+        .settings-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .permission-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .permission-group-title {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .permission-item {
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .permission-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .permission-checkbox {
+            margin-right: 0.5rem;
+        }
+        
+        .user-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #fff;
+            overflow: visible;
+        }
+        
+        .user-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .user-role {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .permissions-container {
+            max-height: 400px;
+            min-height: 120px;
+            overflow-x: hidden;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            position: relative;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+        }
+        
+        @media (max-width: 992px) {
+            .settings-container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            .settings-sidebar {
+                width: 100%;
+                position: relative;
+                top: 0;
+            }
+            
+            .settings-menu {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                padding: 0 1rem;
+            }
+            
+            .settings-menu-item {
+                flex: 1;
+                min-width: 150px;
+            }
+            
+            .settings-menu-link {
+                border-left: none;
+                border-bottom: 3px solid transparent;
+                border-radius: 8px;
+                padding: 0.75rem 1rem;
+                text-align: center;
+                justify-content: center;
+            }
+            
+            .settings-menu-link.active {
+                border-bottom-color: #007bff;
+            }
+        }
+    </style>
+
+<style>
+    .branch-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.25rem;
+        background: #fff;
+        transition: all .2s;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .branch-card:hover {
+        border-color: #ff7a1a;
+        box-shadow: 0 4px 12px rgba(255,122,26,0.08);
+    }
+    .branch-card.inactive {
+        opacity: 0.5;
+        background: #f9fafb;
+    }
+    .branch-logo {
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+        border-radius: 8px;
+        background: #fff7f0;
+        padding: 4px;
+        flex-shrink: 0;
+    }
+    .branch-color-dot {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+    .branch-info { flex: 1; }
+    .branch-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 4px;
+    }
+    .branch-meta {
+        color: #6b7280;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    .branch-actions {
+        display: flex;
+        gap: 8px;
+    }
+    .branch-badge-inactive {
+        background: #f3f4f6;
+        color: #6b7280;
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="settings-container">
+        {% include 'partials/settings_sidebar.html' %}
+
+        <div class="settings-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-map-marker-alt me-2"></i>Филиалы</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#branchModal" onclick="openCreate()">
+                    <i class="fas fa-plus me-1"></i> Добавить филиал
+                </button>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if not branches %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-1"></i> Филиалов пока нет. Нажмите «Добавить филиал», чтобы создать первый.
+                </div>
+            {% else %}
+                {% for b in branches %}
+                <div class="branch-card{% if not b.is_active %} inactive{% endif %}">
+                    {% if b.logo_url %}
+                        <img src="{{ b.logo_url }}" alt="{{ b.name }}" class="branch-logo">
+                    {% else %}
+                        <div class="branch-logo d-flex align-items-center justify-content-center">
+                            <i class="fas fa-image text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <div class="branch-info">
+                        <div class="branch-name">
+                            <span class="branch-color-dot" style="background-color: {{ b.color }};"></span>
+                            {{ b.name }}
+                            {% if not b.is_active %}<span class="branch-badge-inactive ms-2">неактивен</span>{% endif %}
+                        </div>
+                        <div class="branch-meta">
+                            <div><i class="fas fa-map-marker-alt me-1"></i>{{ b.address or '—' }}</div>
+                            <div><i class="fas fa-phone me-1"></i>{{ b.phone or '—' }}</div>
+                        </div>
+                    </div>
+                    <div class="branch-actions">
+                        <button class="btn btn-sm btn-outline-primary"
+                                onclick='openEdit({{ b|tojson }})'>
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        {% if b.is_active %}
+                        <form method="POST" action="{{ url_for('main.branches_deactivate', branch_id=b.id) }}"
+                              onsubmit="return confirm('Деактивировать филиал «{{ b.name }}»? Он пропадёт из выбора при входе и из фильтра заявок.');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-ban"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Модалка создания/редактирования -->
+<div class="modal fade" id="branchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="branchForm" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="branchModalTitle">Добавить филиал</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Название <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="branchName" class="form-control" required maxlength="255">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Адрес</label>
+                        <input type="text" name="address" id="branchAddress" class="form-control" maxlength="500">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Телефон</label>
+                        <input type="text" name="phone" id="branchPhone" class="form-control" maxlength="50">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Цвет метки</label>
+                        <input type="color" name="color" id="branchColor" class="form-control form-control-color" value="#3b82f6">
+                        <small class="text-muted">Используется для метки на странице входа и в фильтрах</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Логотип</label>
+                        <input type="file" name="logo" id="branchLogo" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp">
+                        <small class="text-muted">PNG, JPG, SVG или WEBP. Если не загружен — используется общий логотип компании.</small>
+                        <div id="currentLogo" class="mt-2" style="display:none;">
+                            <small class="text-muted">Текущий:</small>
+                            <img id="currentLogoImg" src="" alt="" style="max-height: 48px; margin-left: 8px;">
+                        </div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_active" id="branchActive" class="form-check-input" value="1" checked>
+                        <label class="form-check-label" for="branchActive">Активен</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce() }}">
+function openCreate() {
+    document.getElementById('branchModalTitle').textContent = 'Добавить филиал';
+    const form = document.getElementById('branchForm');
+    form.action = "{{ url_for('main.branches_create') }}";
+    form.reset();
+    document.getElementById('branchColor').value = '#3b82f6';
+    document.getElementById('branchActive').checked = true;
+    document.getElementById('currentLogo').style.display = 'none';
+}
+
+function openEdit(branch) {
+    document.getElementById('branchModalTitle').textContent = 'Редактировать филиал';
+    const form = document.getElementById('branchForm');
+    form.action = '/settings/branches/' + branch.id + '/update';
+    document.getElementById('branchName').value = branch.name || '';
+    document.getElementById('branchAddress').value = branch.address || '';
+    document.getElementById('branchPhone').value = branch.phone || '';
+    document.getElementById('branchColor').value = branch.color || '#3b82f6';
+    document.getElementById('branchActive').checked = !!branch.is_active;
+    document.getElementById('branchLogo').value = '';
+
+    const box = document.getElementById('currentLogo');
+    const img = document.getElementById('currentLogoImg');
+    if (branch.logo_url) {
+        img.src = branch.logo_url;
+        box.style.display = 'block';
+    } else {
+        box.style.display = 'none';
+    }
+
+    new bootstrap.Modal(document.getElementById('branchModal')).show();
+}
+</script>
+{% endblock %}

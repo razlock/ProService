@@ -54,6 +54,12 @@
                 <span>Права пользователей</span>
             </a>
         </li>
+        <li class="settings-menu-item">
+            <a class="settings-menu-link{% if '/settings/branches' in request.path %} active{% endif %}" href="{{ url_for('main.branches_page') }}">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Филиалы</span>
+            </a>
+        </li>
         {% endif %}
         <li class="settings-menu-item">
             <a class="settings-menu-link{% if request.path == '/settings' and '#permissions' in request.url %} active{% endif %}" href="{{ url_for('main.settings', _anchor='permissions') }}">

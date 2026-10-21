@@ -292,6 +292,12 @@
                             <span>Права пользователей</span>
                         </a>
                     </li>
+                    <li class="settings-menu-item">
+                        <a class="settings-menu-link{% if '/settings/branches' in request.path %} active{% endif %}" href="/settings/branches">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Филиалы</span>
+                        </a>
+                    </li>
                     {% endif %}
                     <li class="settings-menu-item">
                         <a class="settings-menu-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions" role="tab" aria-controls="permissions" aria-selected="false">

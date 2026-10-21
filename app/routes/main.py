@@ -12,6 +12,7 @@ from app.version import APP_BUILD_DATE, APP_VERSION, WINDOWS_SETUP_SHA256
 from app.services.reference_service import ReferenceService
 from app.services.user_service import UserService
 from app.services.settings_service import SettingsService
+from app.services.branch_service import BranchService
 from app.services.action_log_service import ActionLogService
 from app.services.dashboard_service import DashboardService
 from app.middleware.auth import User
@@ -836,6 +837,87 @@ def employees_page():
 def user_permissions_page():
     """Страница управления правами пользователей (только для админов)."""
     return render_template('settings/user_permissions.html')
+
+
+# ===================== ФИЛИАЛЫ =====================
+
+@bp.route('/settings/branches')
+@login_required
+@role_required('admin')
+def branches_page():
+    """Страница управления филиалами (только для админов)."""
+    try:
+        branches = BranchService.get_all(include_inactive=True)
+    except Exception as e:
+        logger.exception("Ошибка загрузки филиалов: %s", e)
+        flash('Не удалось загрузить список филиалов', 'error')
+        branches = []
+    return render_template('settings/branches.html', branches=branches)
+
+
+@bp.route('/settings/branches/create', methods=['POST'])
+@login_required
+@role_required('admin')
+def branches_create():
+    """Создание нового филиала."""
+    try:
+        BranchService.create(
+            data={
+                'name': request.form.get('name'),
+                'address': request.form.get('address'),
+                'phone': request.form.get('phone'),
+                'color': request.form.get('color'),
+                'is_active': request.form.get('is_active') == '1',
+            },
+            logo_file=request.files.get('logo'),
+        )
+        flash('Филиал создан', 'success')
+    except ValueError as e:
+        flash(f'Ошибка: {e}', 'error')
+    except Exception as e:
+        logger.exception("Ошибка создания филиала: %s", e)
+        flash('Не удалось создать филиал', 'error')
+    return redirect(url_for('main.branches_page'))
+
+
+@bp.route('/settings/branches/<int:branch_id>/update', methods=['POST'])
+@login_required
+@role_required('admin')
+def branches_update(branch_id: int):
+    """Обновление филиала."""
+    try:
+        BranchService.update(
+            branch_id=branch_id,
+            data={
+                'name': request.form.get('name'),
+                'address': request.form.get('address'),
+                'phone': request.form.get('phone'),
+                'color': request.form.get('color'),
+                'is_active': request.form.get('is_active') == '1',
+            },
+            logo_file=request.files.get('logo'),
+        )
+        flash('Филиал обновлён', 'success')
+    except ValueError as e:
+        flash(f'Ошибка: {e}', 'error')
+    except Exception as e:
+        logger.exception("Ошибка обновления филиала #%s: %s", branch_id, e)
+        flash('Не удалось обновить филиал', 'error')
+    return redirect(url_for('main.branches_page'))
+
+
+@bp.route('/settings/branches/<int:branch_id>/deactivate', methods=['POST'])
+@login_required
+@role_required('admin')
+def branches_deactivate(branch_id: int):
+    """Деактивация филиала."""
+    try:
+        BranchService.deactivate(branch_id)
+        flash('Филиал деактивирован', 'success')
+    except Exception as e:
+        logger.exception("Ошибка деактивации филиала #%s: %s", branch_id, e)
+        flash('Не удалось деактивировать филиал', 'error')
+    return redirect(url_for('main.branches_page'))
 
 
 @bp.route('/settings', methods=['GET', 'POST'])
