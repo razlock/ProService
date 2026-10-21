@@ -1497,3 +1497,43 @@
                 background: #fff !important;
             }
         }
+/* ============ Цветные иконки в меню настроек ============ */
+.settings-menu-link i {
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+/* Общие настройки */
+.settings-menu-link i.fa-cog { color: #6b7280; }
+/* Статусы заявок */
+.settings-menu-link i.fa-tags { color: #8b5cf6; }
+/* Формы для печати */
+.settings-menu-link i.fa-print { color: #b45309; }
+/* Статьи доходов и расходов */
+.settings-menu-link i.fa-list-alt { color: #16a34a; }
+/* Данные об устройстве */
+.settings-menu-link i.fa-laptop { color: #0ea5e9; }
+/* Шаблоны диагностики */
+.settings-menu-link i.fa-stethoscope { color: #f97316; }
+/* Услуги */
+.settings-menu-link i.fa-cogs { color: #14b8a6; }
+/* Сотрудники */
+.settings-menu-link i.fa-users { color: #2563eb; }
+/* Права пользователей */
+.settings-menu-link i.fa-user-shield { color: #dc2626; }
+/* Филиалы */
+.settings-menu-link i.fa-map-marker-alt { color: #f59e0b; }
+/* Права доступа */
+.settings-menu-link i.fa-key { color: #eab308; }
+/* Уведомления сотрудникам */
+.settings-menu-link i.fa-bell { color: #06b6d4; }
+/* Уведомления клиентам */
+.settings-menu-link i.fa-user-check { color: #22c55e; }
+/* Уведомления директору */
+.settings-menu-link i.fa-envelope-open-text { color: #6366f1; }
+/* О системе */
+.settings-menu-link i.fa-info-circle { color: #9ca3af; }
+
+/* При наведении и активном состоянии — цвет остаётся, но чуть ярче */
+.settings-menu-link:hover i,
+.settings-menu-link.active i {
+    filter: brightness(1.1);
+}
