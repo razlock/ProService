@@ -25,11 +25,11 @@ class Config:
     # Flask-Login
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=1)
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=10)
     SESSION_COOKIE_NAME = os.environ.get('SESSION_COOKIE_NAME', 'nikacrm_session')
     REMEMBER_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SAMESITE = 'Lax'
-    REMEMBER_COOKIE_DURATION = timedelta(days=14)
+    # REMEMBER_COOKIE_DURATION не используется (галочка «Запомнить меня» убрана)
     REMEMBER_COOKIE_NAME = os.environ.get('REMEMBER_COOKIE_NAME', 'nikacrm_remember')
     # Лимит размера тела запроса (защита от больших payload / DoS)
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', str(12 * 1024 * 1024)))  # 12MB

@@ -492,14 +492,13 @@ def login():
                     UserService.rehash_password_if_needed(user_dict['id'], password, current_hash)
                 
                 user = User(user_dict)
-                remember_me = request.form.get('remember_me') in ('1', 'on', 'true', 'True')
                 session.clear()
                 try:
                     session['branch_id'] = int(branch_id)
                 except (TypeError, ValueError):
                     pass
                 session.permanent = True
-                login_user(user, remember=remember_me)
+                login_user(user, remember=False)
                 UserService.update_user_last_login(user.id)
                 try:
                     ActionLogService.log_action(
@@ -512,7 +511,7 @@ def login():
                         details={
                             "ip": _login_client_ip(),
                             "username_mask": _mask_username(username),
-                            "remember_me": bool(remember_me),
+                            
                         },
                     )
                 except Exception as exc:
