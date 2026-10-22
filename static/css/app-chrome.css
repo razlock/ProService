@@ -1537,3 +1537,73 @@
 .settings-menu-link.active i {
     filter: brightness(1.1);
 }
+
+/* ============ Цветные иконки в главном боковом меню ============ */
+.bootstrap-sidebar .nav-link i {
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+/* Главная */
+.bootstrap-sidebar .nav-link i.fa-tachometer-alt { color: #3b82f6; }
+/* Заявки */
+.bootstrap-sidebar .nav-link i.fa-file-alt { color: #8b5cf6; }
+/* Клиенты */
+.bootstrap-sidebar .nav-link i.fa-users { color: #22c55e; }
+/* Склад */
+.bootstrap-sidebar .nav-link i.fa-boxes { color: #f59e0b; }
+/* Магазин */
+.bootstrap-sidebar .nav-link i.fa-shopping-cart { color: #14b8a6; }
+/* Касса */
+.bootstrap-sidebar .nav-link i.fa-cash-register { color: #16a34a; }
+/* Счета */
+.bootstrap-sidebar .nav-link i.fa-file-invoice-dollar { color: #6366f1; }
+/* Отчеты */
+.bootstrap-sidebar .nav-link i.fa-chart-pie { color: #ec4899; }
+/* Зарплата */
+.bootstrap-sidebar .nav-link i.fa-user-tie { color: #eab308; }
+/* Настройки */
+.bootstrap-sidebar .nav-link i.fa-sliders-h { color: #6b7280; }
+/* Профиль */
+.bootstrap-sidebar .nav-link i.fa-user-circle { color: #6b7280; }
+/* Чат */
+.bootstrap-sidebar .nav-link i.fa-comments { color: #0ea5e9; }
+
+/* Легкое увеличение при наведении */
+.bootstrap-sidebar .nav-link:hover i {
+    transform: scale(1.1);
+}
+
+/* ============ Цветные иконки в боковых меню разделов (Склад, Касса) ============ */
+.page-menu-link i {
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+.page-menu-link:hover i {
+    transform: scale(1.1);
+}
+
+/* Склад */
+.page-menu-link i.fa-boxes { color: #0ea5e9; }          /* Товары */
+.page-menu-link i.fa-shopping-cart { color: #14b8a6; }   /* Закупки */
+.page-menu-link i.fa-exchange-alt { color: #f59e0b; }    /* Движения */
+.page-menu-link i.fa-truck { color: #8b5cf6; }           /* Поставщики */
+.page-menu-link i.fa-clipboard-check { color: #22c55e; } /* Инвентаризация */
+.page-menu-link i.fa-history { color: #6b7280; }         /* История */
+.page-menu-link i.fa-chart-bar { color: #ec4899; }       /* Отчеты */
+
+/* Касса / Финансы */
+.page-menu-link i.fa-wallet { color: #16a34a; }          /* Операции */
+.page-menu-link i.fa-chart-line { color: #3b82f6; }      /* Прибыль */
+.page-menu-link i.fa-tags { color: #eab308; }            /* Статьи */
+
+/* ============ Цветные иконки в меню Отчётов ============ */
+.page-menu-link i.fa-calendar-day { color: #06b6d4; }   /* Сводка дня */
+.page-menu-link i.fa-chart-pie { color: #ec4899; }      /* Маржинальность */
+.page-menu-link i.fa-list-alt { color: #6366f1; }       /* Логи действий */
+.page-menu-link i.fa-user-clock { color: #f97316; }     /* Демо: онлайн */
+.page-menu-link i.fa-money-bill-wave { color: #16a34a; }/* Зарплата */
+.page-menu-link i.fa-balance-scale { color: #dc2626; }  /* Долги по зарплате */
+
+/* Дополнение для меню Отчётов */
+.page-menu-link i.fa-tachometer-alt { color: #3b82f6; }   /* Сводный */
+.page-menu-link i.fa-cash-register { color: #16a34a; }    /* Касса */
+.page-menu-link i.fa-users { color: #22c55e; }            /* Клиенты */
