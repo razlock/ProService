@@ -362,7 +362,7 @@ def create_app(config_class=Config):
     # Favicon: avoid 404 spam in browser console (serve SVG via redirect)
     @app.route('/favicon.ico')
     def favicon():
-        return redirect(url_for('static', filename='favicon.svg'))
+        return redirect(url_for('static', filename='favicon.png'))
 
     # Звук входящего сообщения для внутреннего чата (файл в корне проекта).
     @app.route('/oh-oh-icq-sound.mp3')
