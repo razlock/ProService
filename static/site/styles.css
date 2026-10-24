@@ -688,3 +688,82 @@ h1, h2, h3 { line-height: 1.25; margin: 0 0 .5em; }
 .float-card-1 { top: 8%;  left: -22.5px; animation: floaty 4s .6s ease-in-out infinite; }
 .float-card-2 { top: 32%; right: -30px; animation: floaty 4s 1.2s ease-in-out infinite; }
 .float-card-4 { top: 63.3%; left: -22.5px; animation: floaty 4s 1.8s ease-in-out infinite; }
+
+
+/* ============ Липкая панель звонка (Таблетка) ============ */
+.mobile-sticky-call {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    z-index: 9999;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    padding: 6px;
+    gap: 6px;
+    border-radius: 16px;
+    border: 1px solid var(--border, #e5e7eb);
+    width: 94%;
+    max-width: 400px;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+}
+
+[data-theme="dark"] .mobile-sticky-call {
+    background: rgba(36, 30, 24, 0.95);
+    border-color: #3a3128;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+.mobile-sticky-call.is-hidden {
+    transform: translate(-50%, 150%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.mobile-sticky-call .btn-call {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 8px;
+    background: var(--accent, #ff7a1a);
+    color: #fff;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
+    text-align: center;
+}
+
+.mobile-sticky-call .btn-call:active {
+    background: var(--accent-strong, #e85d04);
+    transform: scale(0.96);
+}
+
+.btn-call-name {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    color: #ffffff;
+}
+
+.btn-call-addr {
+    font-size: 0.7rem;
+    opacity: 0.9;
+    margin-top: 3px;
+    white-space: nowrap;
+    display: block;
+    color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    .mobile-sticky-call {
+        display: flex;
+    }
+}

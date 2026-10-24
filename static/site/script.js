@@ -59,3 +59,29 @@
 
 /* ============ Год в подвале ============ */
 document.getElementById('year').textContent = new Date().getFullYear();
+
+// Умное скрытие панели при скролле (с защитой от микро-прокрутки)
+document.addEventListener('DOMContentLoaded', function() {
+    let lastScrollY = window.scrollY;
+    const stickyCall = document.querySelector('.mobile-sticky-call');
+    let isHidden = false;
+
+    if (stickyCall) {
+        window.addEventListener('scroll', () => {
+            const currentScrollY = window.scrollY;
+            const delta = currentScrollY - lastScrollY;
+
+            // Скроллим вниз (игнорируем мелкие подергивания меньше 10px)
+            if (delta > 10 && currentScrollY > 150 && !isHidden) {
+                stickyCall.classList.add('is-hidden');
+                isHidden = true;
+            } 
+            // Скроллим вверх
+            else if (delta < -10 && isHidden) {
+                stickyCall.classList.remove('is-hidden');
+                isHidden = false;
+            }
+            lastScrollY = currentScrollY;
+        }, { passive: true });
+    }
+});
