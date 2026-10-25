@@ -152,16 +152,12 @@ def _login_page_extra():
         "windows_setup": _windows_setup_info(),
         "vps_referral": _vps_referral_info(),
     }
-    # Список активных филиалов (точек) для radio-переключателя на логине
     try:
         from app.database.connection import get_db_connection
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT id, name, address, color FROM branches WHERE is_active = TRUE ORDER BY id")
-            extra["branches"] = [
-                {'id': row[0], 'name': row[1], 'address': row[2], 'color': row[3]}
-                for row in cursor.fetchall()
-            ]
+            extra["branches"] = [{'id': r[0], 'name': r[1], 'address': r[2], 'color': r[3]} for r in cursor.fetchall()]
     except Exception:
         extra["branches"] = []
     try:
@@ -492,6 +488,7 @@ def login():
                     UserService.rehash_password_if_needed(user_dict['id'], password, current_hash)
                 
                 user = User(user_dict)
+                remember_me = request.form.get('remember_me') in ('1', 'on', 'true', 'True')
                 session.clear()
                 try:
                     session['branch_id'] = int(branch_id)
@@ -511,7 +508,7 @@ def login():
                         details={
                             "ip": _login_client_ip(),
                             "username_mask": _mask_username(username),
-                            
+                            "remember_me": bool(remember_me),
                         },
                     )
                 except Exception as exc:
@@ -575,24 +572,6 @@ def logout():
     return redirect(url_for('main.login'))
 
 
-@bp.route('/switch-branch', methods=['POST'])
-@login_required
-def switch_branch():
-    """Переключение точки (филиала) без выхода из системы. Только для админов."""
-    if getattr(current_user, 'role', None) != 'admin':
-        flash('Переключение точек доступно только администраторам', 'error')
-        return redirect(request.referrer or url_for('main.home'))
-
-    branch_id = request.form.get('branch_id')
-    if branch_id:
-        try:
-            session['branch_id'] = int(branch_id)
-            flash('Точка переключена', 'success')
-        except (ValueError, TypeError):
-            flash('Некорректная точка', 'error')
-    return redirect(request.referrer or url_for('main.home'))
-
-
 @bp.route('/new')
 @bp.route('/new/<int:variant>')
 def landing_new(variant=None):
@@ -621,15 +600,11 @@ def home():
             )
         return redirect(url_for('main.login'))
 
-    # Мастерам и другим без прав на финансы/отчёты — сразу на заявки.
-    # Они не должны видеть сводный отчёт по компании (выручка, касса, прибыль).
     try:
-        can_view_dashboard = (
-            UserService.check_permission(current_user.id, 'view_finance')
-            or UserService.check_permission(current_user.id, 'manage_finance')
-            or UserService.check_permission(current_user.id, 'view_reports')
-        )
-        if not can_view_dashboard:
+        can_view = (UserService.check_permission(current_user.id, 'view_finance') or 
+                    UserService.check_permission(current_user.id, 'manage_finance') or 
+                    UserService.check_permission(current_user.id, 'view_reports'))
+        if not can_view:
             return redirect(url_for('orders.all_orders'))
     except Exception:
         pass
@@ -850,86 +825,64 @@ def user_permissions_page():
     """Страница управления правами пользователей (только для админов)."""
     return render_template('settings/user_permissions.html')
 
-
 # ===================== ФИЛИАЛЫ =====================
-
 @bp.route('/settings/branches')
 @login_required
 @role_required('admin')
 def branches_page():
-    """Страница управления филиалами (только для админов)."""
     try:
         branches = BranchService.get_all(include_inactive=True)
-    except Exception as e:
-        logger.exception("Ошибка загрузки филиалов: %s", e)
-        flash('Не удалось загрузить список филиалов', 'error')
+    except Exception:
         branches = []
     return render_template('settings/branches.html', branches=branches)
-
 
 @bp.route('/settings/branches/create', methods=['POST'])
 @login_required
 @role_required('admin')
 def branches_create():
-    """Создание нового филиала."""
     try:
-        BranchService.create(
-            data={
-                'name': request.form.get('name'),
-                'address': request.form.get('address'),
-                'phone': request.form.get('phone'),
-                'color': request.form.get('color'),
-                'is_active': request.form.get('is_active') == '1',
-            },
-            logo_file=request.files.get('logo'),
-        )
+        BranchService.create(data=request.form, logo_file=request.files.get('logo'))
         flash('Филиал создан', 'success')
-    except ValueError as e:
-        flash(f'Ошибка: {e}', 'error')
     except Exception as e:
-        logger.exception("Ошибка создания филиала: %s", e)
-        flash('Не удалось создать филиал', 'error')
+        flash(f'Ошибка: {e}', 'error')
     return redirect(url_for('main.branches_page'))
-
 
 @bp.route('/settings/branches/<int:branch_id>/update', methods=['POST'])
 @login_required
 @role_required('admin')
 def branches_update(branch_id: int):
-    """Обновление филиала."""
     try:
-        BranchService.update(
-            branch_id=branch_id,
-            data={
-                'name': request.form.get('name'),
-                'address': request.form.get('address'),
-                'phone': request.form.get('phone'),
-                'color': request.form.get('color'),
-                'is_active': request.form.get('is_active') == '1',
-            },
-            logo_file=request.files.get('logo'),
-        )
+        BranchService.update(branch_id=branch_id, data=request.form, logo_file=request.files.get('logo'))
         flash('Филиал обновлён', 'success')
-    except ValueError as e:
-        flash(f'Ошибка: {e}', 'error')
     except Exception as e:
-        logger.exception("Ошибка обновления филиала #%s: %s", branch_id, e)
-        flash('Не удалось обновить филиал', 'error')
+        flash(f'Ошибка: {e}', 'error')
     return redirect(url_for('main.branches_page'))
-
 
 @bp.route('/settings/branches/<int:branch_id>/deactivate', methods=['POST'])
 @login_required
 @role_required('admin')
 def branches_deactivate(branch_id: int):
-    """Деактивация филиала."""
     try:
         BranchService.deactivate(branch_id)
         flash('Филиал деактивирован', 'success')
     except Exception as e:
-        logger.exception("Ошибка деактивации филиала #%s: %s", branch_id, e)
-        flash('Не удалось деактивировать филиал', 'error')
+        flash(f'Ошибка: {e}', 'error')
     return redirect(url_for('main.branches_page'))
+
+@bp.route('/switch-branch', methods=['POST'])
+@login_required
+def switch_branch():
+    if getattr(current_user, 'role', None) != 'admin':
+        return redirect(request.referrer or url_for('main.home'))
+    branch_id = request.form.get('branch_id')
+    if branch_id:
+        try:
+            session['branch_id'] = int(branch_id)
+            flash('Точка переключена', 'success')
+        except (ValueError, TypeError):
+            pass
+    return redirect(request.referrer or url_for('main.home'))
+
 
 
 @bp.route('/settings', methods=['GET', 'POST'])

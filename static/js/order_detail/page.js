@@ -198,6 +198,35 @@ function numericOrderId() {
                 .catch(() => null);
         };
 
+        window.printWhenImagesReady = function(selectorOrEl) {
+            const container = typeof selectorOrEl === 'string'
+                ? document.querySelector(selectorOrEl)
+                : selectorOrEl;
+            const images = container ? Array.from(container.querySelectorAll('img')) : [];
+            let pending = 0;
+            let printed = false;
+            const finish = function() {
+                if (printed) return;
+                printed = true;
+                window.print();
+            };
+            const check = function() {
+                pending--;
+                if (pending <= 0) finish();
+            };
+            images.forEach(function(img) {
+                if (img.complete && img.naturalHeight !== 0) return;
+                pending++;
+                img.addEventListener('load', check, {once: true});
+                img.addEventListener('error', check, {once: true});
+            });
+            if (pending === 0) {
+                finish();
+                return;
+            }
+            setTimeout(finish, 3000);
+        };
+
         window.printRenderedTemplate = function(templateType) {
             const run = function() {
                 if (templateType === 'both') {
@@ -206,7 +235,7 @@ function numericOrderId() {
                     return;
                 }
                 if (!templateType || templateType === 'customer') {
-                    window.print();
+                    window.printWhenImagesReady('.print-view');
                     return;
                 }
                 const map = {
@@ -306,7 +335,7 @@ function numericOrderId() {
             url.searchParams.delete('auto_print');
             const qs = url.searchParams.toString();
             history.replaceState(null, '', url.pathname + (qs ? '?' + qs : '') + url.hash);
-            setTimeout(() => { window.print(); }, 250);
+            setTimeout(() => { window.printWhenImagesReady('.print-view'); }, 250);
         }
 
         let pendingClosedPrintAfterPayment = false;

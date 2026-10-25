@@ -17,9 +17,9 @@ $requirements = Join-Path $packagingDir "requirements-windows.txt"
 
 $artifacts = @(
     @{
-        Name = "python-installer.exe"
-        Url = "https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe"
-        Sha256 = "67B5635E80EA51072B87941312D00EC8927C4DB9BA18938F7AD2D27B328B95FB"
+        Name = "python-3.12.10-embed-amd64.zip"
+        Url = "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip"
+        Sha256 = "4ACBED6DD1C744B0376E3B1CF57CE906F9DC9E95E68824584C8099A63025A3C3"
     },
     @{
         Name = "postgresql-installer.exe"
@@ -101,6 +101,15 @@ if (-not $SkipDownload) {
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to build the Windows offline wheelhouse."
     }
+    # The embeddable runtime has no pip. These wheels bootstrap it offline.
+    & python -m pip download `
+        --disable-pip-version-check `
+        --only-binary=:all: `
+        --dest $wheelhouse `
+        "pip" "setuptools" "wheel"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to download pip, setuptools and wheel into the wheelhouse."
+    }
 }
 
 $wheelFiles = @(Get-ChildItem -LiteralPath $wheelhouse -File)
@@ -133,6 +142,29 @@ if (-not $SkipCompile) {
     if (-not (Test-Path -LiteralPath $IsccPath)) {
         throw "Inno Setup compiler not found: $IsccPath"
     }
+    Write-Host "[BUILD] Checking Python syntax"
+    & python -m compileall -q -f app wsgi.py packaging\windows\service_entry.py scripts\run_migrations.py
+    if ($LASTEXITCODE -ne 0) { throw "Python syntax check failed. The installer was not built." }
+
+    # Windows PowerShell 5.1 -File reads a script without a BOM as ANSI, turns
+    # Cyrillic bytes into smart quotes and refuses to parse it. That happened to
+    # smoke-test.ps1 first and would break bootstrap.ps1 the same way.
+    Write-Host "[BUILD] Checking PowerShell script encoding"
+    $scriptsToCheck = @(Get-ChildItem -LiteralPath $packagingDir -Filter "*.ps1" -File)
+    $scriptsToCheck += Get-Item -LiteralPath (Join-Path $repoRoot "scripts\Grant-LocalPostgresAppPrivileges.ps1")
+    $missingBom = @()
+    foreach ($script in $scriptsToCheck) {
+        $bytes = [System.IO.File]::ReadAllBytes($script.FullName)
+        $hasBom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
+        $text = [System.IO.File]::ReadAllText($script.FullName, [System.Text.Encoding]::UTF8)
+        if (-not $hasBom -and $text -match "[\u0400-\u04FF]") {
+            $missingBom += $script.Name
+        }
+    }
+    if ($missingBom.Count -gt 0) {
+        throw "PowerShell scripts with Cyrillic must be UTF-8 with BOM: $($missingBom -join ', ')"
+    }
+
     Write-Host "[BUILD] Compiling NikaCRM.iss"
     & $IsccPath (Join-Path $packagingDir "NikaCRM.iss")
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed." }

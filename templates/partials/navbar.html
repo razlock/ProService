@@ -1,4 +1,5 @@
 <!-- Шапка: бренд + поиск на всю ширину + уведомления. Разделы — в левом сайдбаре (desktop) / drawer (mobile). -->
+{% set site_base = '' if config.PUBLIC_LANDING else 'https://service.nika-crm.ru' %}
 <nav class="mac-menu-bar no-print">
     <div class="mac-menu-container">
         <button type="button" class="mac-mobile-toggle" id="macMobileToggle" aria-label="Открыть меню" aria-controls="macMobileDrawer" aria-expanded="false">

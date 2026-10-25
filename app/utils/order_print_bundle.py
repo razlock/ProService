@@ -49,10 +49,8 @@ def render_order_print_templates(
     """Return rendered HTML for customer / sales_receipt / work_act (or None)."""
     result = {"customer": None, "sales_receipt": None, "work_act": None}
     try:
-        order_obj_pre = order_data.get("order") or {}
-        branch_id_raw = getattr(order, "branch_id", None)
-        if branch_id_raw is None:
-            branch_id_raw = order_obj_pre.get("branch_id")
+        order_obj = order_data.get("order") or {}
+        branch_id_raw = getattr(order, "branch_id", None) or order_obj.get("branch_id")
         try:
             branch_id = int(branch_id_raw) if branch_id_raw not in (None, "", 0) else None
         except Exception:
@@ -64,21 +62,12 @@ def render_order_print_templates(
                 from app.database.connection import get_db_connection
                 with get_db_connection() as conn:
                     cur = conn.cursor()
-                    cur.execute(
-                        "SELECT id, name, address, phone, logo_url FROM branches WHERE id = ?",
-                        (branch_id,),
-                    )
+                    cur.execute("SELECT id, name, address, phone, logo_url FROM branches WHERE id = ?", (branch_id,))
                     row = cur.fetchone()
                     if row:
-                        branch_info = {
-                            "id": row[0],
-                            "name": row[1],
-                            "address": row[2],
-                            "phone": row[3],
-                            "logo_url": row[4],
-                        }
+                        branch_info = {"id": row[0], "name": row[1], "address": row[2], "phone": row[3], "logo_url": row[4]}
             except Exception:
-                branch_info = None
+                pass
 
         tpl = SettingsService.get_print_template_fresh("customer", branch_id)
         html_content = (tpl or {}).get("html_content") if isinstance(tpl, dict) else None

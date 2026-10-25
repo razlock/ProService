@@ -292,6 +292,8 @@
                             <span>Права пользователей</span>
                         </a>
                     </li>
+                    {% endif %}
+                    {% if current_user.is_authenticated and current_user.role == 'admin' %}
                     <li class="settings-menu-item">
                         <a class="settings-menu-link{% if '/settings/branches' in request.path %} active{% endif %}" href="/settings/branches">
                             <i class="fas fa-map-marker-alt"></i>

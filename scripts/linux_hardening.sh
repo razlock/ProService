@@ -52,9 +52,8 @@ if command -v ufw >/dev/null 2>&1; then
     ufw allow 22/tcp comment 'SSH' || true
     ufw allow 80/tcp comment 'HTTP' || true
     ufw allow 443/tcp comment 'HTTPS' || true
-    ufw allow 8080/tcp comment 'Profi-Service site' || true
     ufw --force enable
-    LOG "ufw: enabled (22/80/443/8080)"
+    LOG "ufw: enabled (22/80/443)"
   fi
 else
   apt-get update -qq
@@ -64,9 +63,8 @@ else
   ufw allow 22/tcp || true
   ufw allow 80/tcp || true
   ufw allow 443/tcp || true
-  ufw allow 8080/tcp || true
   ufw --force enable
-  LOG "ufw: installed and enabled (22/80/443/8080)"
+  LOG "ufw: installed and enabled"
 fi
 
 # --- fail2ban ---

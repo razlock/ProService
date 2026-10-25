@@ -22,13 +22,18 @@ New-Item -ItemType Directory -Force -Path $stableDir | Out-Null
 if ([string]::IsNullOrWhiteSpace($ProgressDir)) {
     $ProgressDir = $stableDir
 }
-# Inno polls this PID with a message pump. Write it before any other work so
-# the wizard unfreezes even if a later command hangs.
-[System.IO.File]::WriteAllText(
-    (Join-Path $ProgressDir "setup-progress.pid"),
-    "$PID",
-    [System.Text.Encoding]::Default
-)
+New-Item -ItemType Directory -Force -Path $ProgressDir | Out-Null
+Write-Output ("[Nika CRM Setup] bootstrap pid {0} LanguageMode={1}" -f $PID, $ExecutionContext.SessionState.LanguageMode)
+$languageMode = "$($ExecutionContext.SessionState.LanguageMode)"
+if ($languageMode -eq "ConstrainedLanguage" -or $languageMode -eq "RestrictedLanguage") {
+    $locked = "PowerShell запущен в ограниченном режиме ($languageMode). Автонастройка Python и PostgreSQL в этом режиме невозможна. Установите Nika CRM на обычной Windows (не песочница с политикой AppLocker/WDAC) или отключите ограничение скриптов для установщика."
+    Write-Output $locked
+    Set-Content -LiteralPath (Join-Path $stableDir "setup-error.txt") -Value $locked -Encoding Default
+    Set-Content -LiteralPath (Join-Path $ProgressDir "setup-progress.txt") -Value ("100`r`nОшибка`r`n" + $locked) -Encoding Default
+    Set-Content -LiteralPath (Join-Path $ProgressDir "setup-progress.done") -Value "1" -Encoding Ascii
+    exit 1
+}
+Set-Content -LiteralPath (Join-Path $ProgressDir "setup-progress.pid") -Value "$PID" -Encoding Ascii
 $bootstrapLog = Join-Path $stableDir "setup.log"
 @(
     "[{0}] bootstrap pid {1}" -f (Get-Date -Format "o"), $PID
@@ -37,6 +42,7 @@ $bootstrapLog = Join-Path $stableDir "setup.log"
     "AssetsDir=$AssetsDir"
     "ProgressDir=$ProgressDir"
     "PSVersion=$($PSVersionTable.PSVersion)"
+    "LanguageMode=$($ExecutionContext.SessionState.LanguageMode)"
     "CommandLine=$($MyInvocation.Line)"
 ) | Set-Content -LiteralPath $bootstrapLog -Encoding UTF8
 
@@ -53,25 +59,23 @@ function Protect-Secrets([string] $Text) {
 
 function Write-SetupError([string] $Text) {
     # setup-error.txt is copied to the public desktop, so it must never carry
-    # the generated PostgreSQL passwords.
+    # the generated PostgreSQL passwords. Set-Content uses the ANSI code page
+    # that Inno reads into the dialog. WriteAllText is only a second copy.
     $safe = Protect-Secrets $Text
     $errorFile = Join-Path $ProgressDir "setup-error.txt"
+    try { Set-Content -LiteralPath $errorFile -Value $safe -Encoding Default } catch {}
     try {
         [System.IO.File]::WriteAllText($errorFile, $safe, [System.Text.Encoding]::Default)
     }
     catch {
     }
-    try {
-        Add-Content -LiteralPath $bootstrapLog -Value $safe -Encoding UTF8
-    }
-    catch {
-    }
+    Write-Host $safe
 }
 
 if ([string]::IsNullOrWhiteSpace($AppDir) -or [string]::IsNullOrWhiteSpace($DataDir) -or [string]::IsNullOrWhiteSpace($AssetsDir)) {
     Write-SetupError "ERROR: missing AppDir/DataDir/AssetsDir (script started, parameters did not bind)."
-    [System.IO.File]::WriteAllText((Join-Path $ProgressDir "setup-progress.done"), "1", [System.Text.Encoding]::Default)
-    throw "Missing installer parameters. See $bootstrapLog"
+    Set-Content -LiteralPath (Join-Path $ProgressDir "setup-progress.done") -Value "1" -Encoding Ascii
+    exit 1
 }
 
 $appRoot = Join-Path $AppDir "app"
@@ -87,7 +91,7 @@ $backupDir = Join-Path (Split-Path -Parent $DataDir) "NikaCRM-backup"
 $installerDir = Join-Path $DataDir "installer"
 $envFile = Join-Path $DataDir ".env"
 $stateFile = Join-Path $installerDir "install-state.json"
-$pythonInstaller = Join-Path $AssetsDir "python-installer.exe"
+$pythonZip = Join-Path $AssetsDir "python-3.12.10-embed-amd64.zip"
 $postgresInstaller = Join-Path $AssetsDir "postgresql-installer.exe"
 $wheelhouse = Join-Path $AssetsDir "wheelhouse"
 $nssmSource = Join-Path $AssetsDir "nssm.exe"
@@ -102,26 +106,26 @@ trap {
     try {
         Write-SetupError ($_ | Out-String)
         $_ | Out-File -LiteralPath $bootstrapLog -Append -Encoding UTF8
-        [System.IO.File]::WriteAllText($progressDoneFile, "1", [System.Text.Encoding]::Default)
+        Set-Content -LiteralPath $progressDoneFile -Value "1" -Encoding Ascii
     }
     catch {
     }
-    break
+    exit 1
 }
 
-[System.IO.File]::WriteAllText($progressPidFile, "$PID", [System.Text.Encoding]::Default)
-[System.IO.File]::WriteAllText(
-    $progressFile,
-    "5`r`nЗапуск настройки`r`nСкрипт стартовал. Дальше: права на папку данных, Python, PostgreSQL.",
-    [System.Text.Encoding]::Default
-)
+Set-Content -LiteralPath $progressPidFile -Value "$PID" -Encoding Ascii
+Set-Content -LiteralPath $progressFile -Value @(
+    "5",
+    "Запуск настройки",
+    "Скрипт стартовал. Дальше: права на папку данных, Python, PostgreSQL."
+) -Encoding Default
 
 New-Item -ItemType Directory -Force -Path $runtimeRoot, $logsDir, $installerDir, $pgData | Out-Null
-[System.IO.File]::WriteAllText(
-    $progressFile,
-    "6`r`nПрава на папку данных`r`nОграничиваем доступ к %ProgramData%\NikaCRM.",
-    [System.Text.Encoding]::Default
-)
+Set-Content -LiteralPath $progressFile -Value @(
+    "6",
+    "Права на папку данных",
+    "Ограничиваем доступ к %ProgramData%\NikaCRM."
+) -Encoding Default
 
 # Inno's Permissions parameter only adds ACEs, so the inherited "Users: read" from
 # C:\ProgramData keeps .env (SECRET_KEY, DATABASE_URL) and the setup log readable by
@@ -626,7 +630,7 @@ try {
         throw "Setup must run with administrator privileges."
     }
 
-    foreach ($required in @($pythonInstaller, $postgresInstaller, $wheelhouse, $nssmSource)) {
+    foreach ($required in @($pythonZip, $postgresInstaller, $wheelhouse, $nssmSource)) {
         if (-not (Test-Path -LiteralPath $required)) {
             throw "Offline bundle component is missing: $required"
         }
@@ -659,32 +663,67 @@ try {
     $script:SecretValues.Add($postgresSuperPassword) | Out-Null
     $script:SecretValues.Add($appDbPassword) | Out-Null
 
-    if (-not (Test-Path -LiteralPath $pythonExe)) {
-        Set-SetupProgress 12 "Установка Python 3.12" "Один раз, занимает около минуты."
-        Invoke-Native $pythonInstaller @(
-            "/quiet",
-            "InstallAllUsers=1",
-            "TargetDir=`"$pythonRoot`"",
-            "Include_pip=1",
-            "Include_launcher=0",
-            "Include_test=0",
-            "Shortcuts=0",
-            "PrependPath=0",
-            "CompileAll=0"
-        ) @(0)
+    # Embeddable CPython, private to Nika CRM. The python.org executable installer
+    # registers a machine-wide Python 3.12 and, when one is already present, either
+    # repairs that install or ignores TargetDir. Do not switch back to it.
+    # The ._pth file stays isolated: do not uncomment the site import line, or the
+    # customer's PYTHONPATH and PythonCore registry leak into this interpreter.
+    Set-SetupProgress 12 "Установка Python 3.12" "Свой Python Nika CRM, рядом с уже установленным. Чужой Python не удаляется."
+    . (Join-Path $PSScriptRoot "remove-nika-python.ps1")
+    Remove-NikaBundledPython -AppDir $AppDir -Log { param($Message) Write-Step $Message }
+
+    $embedMarker = Join-Path $pythonRoot "nika-embed.txt"
+    $expectedMarker = "embed-3.12.10-isolated"
+    $markerText = ""
+    if (Test-Path -LiteralPath $embedMarker) {
+        $markerText = (Get-Content -LiteralPath $embedMarker -Raw -ErrorAction SilentlyContinue)
+        if ($null -eq $markerText) { $markerText = "" }
+    }
+    $needsPythonExtract = (-not (Test-Path -LiteralPath $pythonExe)) -or ($markerText.Trim() -ne $expectedMarker)
+    if ($needsPythonExtract) {
+        if (Test-Path -LiteralPath $pythonRoot) {
+            Remove-Item -LiteralPath $pythonRoot -Recurse -Force
+        }
+        New-Item -ItemType Directory -Force -Path $pythonRoot | Out-Null
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($pythonZip, $pythonRoot)
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllText(
+            (Join-Path $pythonRoot "python312._pth"),
+            "python312.zip`r`n.`r`nLib\site-packages`r`n",
+            $utf8NoBom
+        )
+        [System.IO.File]::WriteAllText($embedMarker, $expectedMarker, $utf8NoBom)
     }
     if (-not (Test-Path -LiteralPath $pythonExe)) {
         throw "Python installation did not create $pythonExe"
     }
 
+    $env:PYTHONNOUSERSITE = "1"
+    Remove-Item Env:PYTHONHOME -ErrorAction SilentlyContinue
+    Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
+    $sitePackages = Join-Path $pythonRoot "Lib\site-packages"
+    New-Item -ItemType Directory -Force -Path $sitePackages | Out-Null
+    $pipWheel = Get-ChildItem -LiteralPath $wheelhouse -Filter "pip-*.whl" -File | Select-Object -First 1
+    if (-not $pipWheel) {
+        throw "Offline wheelhouse does not contain a pip wheel. Rebuild the Windows bundle."
+    }
+    $bootstrapPy = Join-Path $stableDir "bootstrap-pip.py"
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText($bootstrapPy, "import sys`r`nsys.path.insert(0, sys.argv[1])`r`nfrom pip._internal.cli.main import main`r`nraise SystemExit(main(sys.argv[2:]))`r`n", $utf8NoBom)
+    $requirementsFile = Join-Path $appRoot "packaging\windows\requirements-windows.txt"
     Set-SetupProgress 25 "Установка библиотек приложения" "Ставятся из локальной папки, интернет не нужен."
-    Invoke-Native $pythonExe @(
-        "-m", "pip", "install",
-        "--disable-pip-version-check",
-        "--no-index",
-        "--find-links", "`"$wheelhouse`"",
-        "-r", "`"$(Join-Path $appRoot 'packaging\windows\requirements-windows.txt')`""
-    ) @(0) -CaptureOutput
+    $pipArgs = @(
+        $bootstrapPy,
+        $pipWheel.FullName,
+        "install", "--isolated", "--disable-pip-version-check",
+        "--no-index", "--find-links", $wheelhouse,
+        "--target", $sitePackages,
+        "--upgrade",
+        "-r", $requirementsFile,
+        "pip", "setuptools", "wheel"
+    ) | ForEach-Object { Format-NativeArgument $_ }
+    Invoke-Native $pythonExe $pipArgs @(0) -CaptureOutput
 
     if (-not (Test-Path -LiteralPath (Join-Path $pgBin "psql.exe"))) {
         # Binaries are missing, so PostgreSQL has to be installed again. Three
@@ -1033,12 +1072,14 @@ END
     Invoke-Nssm @("set", $serviceName, "AppExit", "Default", "Restart")
     Invoke-Nssm @("set", $serviceName, "AppRestartDelay", "5000")
     Invoke-Nssm @("set", $serviceName, "AppNoConsole", "1")
+    Invoke-Nssm @("set", $serviceName, "AppEnvironmentExtra", "PYTHONNOUSERSITE=1")
     Invoke-Nssm @("set", $serviceName, "AppStdout", (Join-Path $logsDir "web-stdout.log"))
     Invoke-Nssm @("set", $serviceName, "AppStderr", (Join-Path $logsDir "web-stderr.log"))
     Invoke-Nssm @("set", $serviceName, "AppRotateFiles", "1")
     Invoke-Nssm @("set", $serviceName, "AppRotateBytes", "5242880")
     & sc.exe failure $serviceName reset= 86400 actions= restart/5000/restart/10000/restart/30000 | Out-Null
     $nssmStart = Start-Process -FilePath $nssm -ArgumentList @("start", $serviceName) -PassThru -NoNewWindow
+    $null = $nssmStart.Handle
     if (-not $nssmStart.WaitForExit(180000)) {
         Write-Step "NSSM start is still running after 3 minutes; continuing with HTTP check."
     }
@@ -1059,7 +1100,21 @@ END
         Start-Sleep -Seconds 1
     }
     if (-not $healthy) {
-        throw "Nika CRM service did not pass the HTTP health check."
+        $logTail = @()
+        foreach ($logName in @("web-stderr.log", "web-stdout.log")) {
+            $logPath = Join-Path $logsDir $logName
+            if (-not (Test-Path -LiteralPath $logPath)) { continue }
+            $lines = @(Get-Content -LiteralPath $logPath -Tail 40 -ErrorAction SilentlyContinue)
+            if ($lines.Count -gt 0) {
+                $logTail += "---- $logName ----"
+                $logTail += $lines
+            }
+        }
+        $detail = ""
+        if ($logTail.Count -gt 0) {
+            $detail = "`n" + ($logTail -join "`n")
+        }
+        throw "Nika CRM service did not pass the HTTP health check.$detail"
     }
 
     $nowIso = (Get-Date).ToString("o")

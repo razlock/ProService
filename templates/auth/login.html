@@ -20,50 +20,6 @@
             align-items: center;
             justify-content: center;
         }
-        /* Тёплая палитра визитки (оранжевые акценты) */
-        .btn-primary {
-            background-color: #ff7a1a !important;
-            border-color: #ff7a1a !important;
-            color: #ffffff !important;
-        }
-        .btn-primary:hover {
-            background-color: #e85d04 !important;
-            border-color: #e85d04 !important;
-        }
-        .btn-outline-primary {
-            color: #e85d04 !important;
-            border-color: #ff7a1a !important;
-        }
-        .btn-outline-primary:hover {
-            background-color: #fff7f0 !important;
-            color: #e85d04 !important;
-            border-color: #e85d04 !important;
-        }
-        .btn-check:checked + .btn-outline-primary {
-            background-color: #ffe9d6 !important;
-            color: #e85d04 !important;
-            border-color: #ff7a1a !important;
-        }
-        .text-primary {
-            color: #ff7a1a !important;
-        }
-        /* Тёплые рамки для полей ввода */
-        .form-control {
-            border: 1px solid #f0e4da;
-            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-        }
-        .form-control:focus {
-            border-color: #ff7a1a !important;
-            box-shadow: 0 0 0 0.25rem rgba(255, 122, 26, 0.25) !important;
-        }
-        .form-check-input:checked {
-            background-color: #ff7a1a !important;
-            border-color: #ff7a1a !important;
-        }
-        .form-check-input:focus {
-            border-color: #ff7a1a !important;
-            box-shadow: 0 0 0 0.25rem rgba(255, 122, 26, 0.25) !important;
-        }
         .login-card {
             max-width: 400px;
             width: 100%;
@@ -77,6 +33,16 @@
             font-size: 0.9rem;
             margin-bottom: 0;
         }
+    </style>
+
+    <style nonce="{{ csp_nonce() }}">
+        .btn-primary { background-color: #ff7a1a !important; border-color: #ff7a1a !important; }
+        .btn-primary:hover { background-color: #e85d04 !important; border-color: #e85d04 !important; }
+        .btn-outline-primary { color: #e85d04 !important; border-color: #ff7a1a !important; }
+        .btn-outline-primary:hover { background-color: #fff7f0 !important; color: #e85d04 !important; border-color: #e85d04 !important; }
+        .btn-check:checked + .btn-outline-primary { background-color: #ffe9d6 !important; color: #e85d04 !important; border-color: #ff7a1a !important; }
+        .text-primary { color: #ff7a1a !important; }
+        .form-control:focus { border-color: #ff7a1a !important; box-shadow: 0 0 0 0.25rem rgba(255, 122, 26, 0.25) !important; }
     </style>
 </head>
 <body>
@@ -220,37 +186,6 @@
     </footer>
     <!-- Bootstrap JS -->
     <script src="{{ url_for('static', filename='cdn/bootstrap/5.3.0/js/bootstrap.bundle.min.js') }}"></script>
-    <script nonce="{{ csp_nonce() }}">
-        document.addEventListener('DOMContentLoaded', function() {
-            const loginForm = document.querySelector('form[method="POST"]');
-            if (loginForm) {
-                loginForm.addEventListener('submit', function(e) {
-                    const selectedBranch = document.querySelector('input[name="branch_id"]:checked');
-                    if (!selectedBranch) {
-                        e.preventDefault();
-                        const hint = document.getElementById('branchSelectionHint');
-                        if (hint) hint.style.display = 'block';
-                        alert('Пожалуйста, выберите филиал!');
-                        const branchContainer = document.querySelector('.row.g-2.align-items-stretch');
-                        if (branchContainer) {
-                            branchContainer.style.border = '2px solid #dc3545';
-                            branchContainer.style.borderRadius = '8px';
-                            branchContainer.style.padding = '8px';
-                            document.querySelectorAll('input[name="branch_id"]').forEach(function(radio) {
-                                radio.addEventListener('change', function() {
-                                    branchContainer.style.border = '';
-                                    branchContainer.style.padding = '';
-                                    const hint2 = document.getElementById('branchSelectionHint');
-                                    if (hint2) hint2.style.display = 'none';
-                                });
-                            });
-                        }
-                        return false;
-                    }
-                });
-            }
-        });
-    </script>
 </body>
 </html>
 

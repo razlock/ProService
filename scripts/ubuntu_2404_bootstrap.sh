@@ -38,42 +38,15 @@ HAS_USERS="$(sudo -u postgres psql -d nikacrm -Atc \
   "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name='users';" || echo 0)"
 
 if [[ "${HAS_USERS}" != "1" ]]; then
-  # Приоритет — свой дамп с данными (database/seed/nikacrm_data.sql).
-  # Fallback — демо-дамп разработчика.
-  if [[ -f "$DEST/database/seed/nikacrm_data.sql" ]]; then
-    SEED_FILE="$DEST/database/seed/nikacrm_data.sql"
-    echo "Импорт данных CRM: $SEED_FILE"
-  elif [[ -f "$DEST/database/bootstrap/nikacrm_public_sanitized.sql" ]]; then
-    SEED_FILE="$DEST/database/bootstrap/nikacrm_public_sanitized.sql"
-    echo "Импорт демо-дампа: $SEED_FILE"
-  else
-    echo "Ошибка: нет ни database/seed/nikacrm_data.sql, ни database/bootstrap/nikacrm_public_sanitized.sql"
+  if [[ ! -f "$DEST/database/bootstrap/nikacrm_public_sanitized.sql" ]]; then
+    echo "Ошибка: нет файла database/bootstrap/nikacrm_public_sanitized.sql"
     exit 1
   fi
-  cp "$SEED_FILE" /tmp/nikacrm_seed.sql
-  chmod 644 /tmp/nikacrm_seed.sql
-  sudo -u postgres psql -d nikacrm -v ON_ERROR_STOP=1 -f /tmp/nikacrm_seed.sql
-  rm -f /tmp/nikacrm_seed.sql
-
-  # Переназначаем владельца всех объектов схемы public на nikacrm,
-  # иначе миграции упадут с "must be owner of table users"
-  echo "Переназначение владельца объектов на nikacrm..."
-  sudo -u postgres psql -d nikacrm -v ON_ERROR_STOP=1 <<'EOSQL_REASSIGN'
-DO $$
-DECLARE
-    r RECORD;
-BEGIN
-    FOR r IN SELECT tablename FROM pg_tables WHERE schemaname='public' LOOP
-        EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' OWNER TO nikacrm';
-    END LOOP;
-    FOR r IN SELECT sequencename FROM pg_sequences WHERE schemaname='public' LOOP
-        EXECUTE 'ALTER SEQUENCE public.' || quote_ident(r.sequencename) || ' OWNER TO nikacrm';
-    END LOOP;
-    FOR r IN SELECT viewname FROM pg_views WHERE schemaname='public' LOOP
-        EXECUTE 'ALTER VIEW public.' || quote_ident(r.viewname) || ' OWNER TO nikacrm';
-    END LOOP;
-END $$;
-EOSQL_REASSIGN
+  # psql от пользователя postgres не читает файлы из /root (политика доступа) — копируем во /tmp
+  cp "$DEST/database/bootstrap/nikacrm_public_sanitized.sql" /tmp/nikacrm_public_sanitized.sql
+  chmod 644 /tmp/nikacrm_public_sanitized.sql
+  sudo -u postgres psql -d nikacrm -v ON_ERROR_STOP=1 -f /tmp/nikacrm_public_sanitized.sql
+  rm -f /tmp/nikacrm_public_sanitized.sql
 fi
 
 # В OSS-репозитории каталог save/ не входит в git — выдаём права явно (аналог save/scripts/grant_app_user_after_vps_restore.sql)
@@ -96,16 +69,14 @@ fi
 
 umask 077
 HOST_NAME="$(hostname -s 2>/dev/null || hostname || echo localhost)"
-PUBLIC_IP="$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null | tr -d '\n' || echo '')"
-LOCAL_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || echo '')"
 cat >"$DEST/.env" <<EOF
 SECRET_KEY=${SECRET}
 FLASK_ENV=production
 FLASK_DEBUG=False
 DB_DRIVER=postgres
 DATABASE_URL=postgresql://nikacrm:${NIKA_PASS}@127.0.0.1:5432/nikacrm
-TRUSTED_HOSTS=localhost,127.0.0.1,@private,${HOST_NAME}${LOCAL_IP:+,$LOCAL_IP}${PUBLIC_IP:+,$PUBLIC_IP}
-SOCKETIO_CORS_ALLOWED_ORIGINS=http://localhost:5000,http://127.0.0.1:5000,@private${PUBLIC_IP:+,http://$PUBLIC_IP}
+TRUSTED_HOSTS=localhost,127.0.0.1,@private,${HOST_NAME}
+SOCKETIO_CORS_ALLOWED_ORIGINS=http://localhost:5000,http://127.0.0.1:5000,@private
 RATELIMIT_STORAGE_URI=memory://
 TIMEZONE_OFFSET=3
 EOF
@@ -129,28 +100,6 @@ MAIL_TIMEOUT=15
 EOF
 fi
 chmod 600 "$DEST/.env"
-
-# Копируем логотипы и картинки в /var/www/nikacrm/images/ (отдаются через nginx)
-if [[ -d "$DEST/static/images" ]]; then
-  mkdir -p /var/www/nikacrm/images
-  cp -r "$DEST/static/images/." /var/www/nikacrm/images/
-  # nginx работает от www-data — важно чтобы /var/www был доступен на чтение всем
-  chmod 755 /var/www
-  chmod 755 /var/www/nikacrm /var/www/nikacrm/images
-  find /var/www/nikacrm/images -type d -exec chmod 755 {} \;
-  find /var/www/nikacrm/images -type f -exec chmod 644 {} \;
-  echo "Логотипы скопированы в /var/www/nikacrm/images/ (права выставлены)"
-fi
-
-# Сайт-визитка: копируем static/site/* в /var/www/profi-service/
-if [[ -d "$DEST/static/site" ]]; then
-  mkdir -p /var/www/profi-service
-  cp -r "$DEST/static/site/." /var/www/profi-service/
-  chmod 755 /var/www /var/www/profi-service
-  find /var/www/profi-service -type d -exec chmod 755 {} \;
-  find /var/www/profi-service -type f -exec chmod 644 {} \;
-  echo "Сайт-визитка развёрнута в /var/www/profi-service/"
-fi
 
 cd "$DEST"
 ./venv/bin/python scripts/run_migrations.py

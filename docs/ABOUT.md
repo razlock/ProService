@@ -1,12 +1,12 @@
 # О проекте и установка
 
-**Nika CRM** — бесплатная open-source CRM для сервисных центров: заявки на ремонт, склад, касса, зарплата, отчёты и портал клиента.
+**Nika CRM** — бесплатная CRM для сервисных центров: заявки на ремонт, склад, касса, зарплата, отчёты и портал клиента.
 
 Работает на своём сервере или в локальной сети, без SaaS.
 
 - Живое демо: [service.nika-crm.ru](https://service.nika-crm.ru/)
 - Исходный код: [GitHub Nika-Service-CRM](https://github.com/nika-sc/Nika-Service-CRM)
-- Лицензия: MIT
+- Лицензия: бесплатное использование. Копировать и изменять программу нельзя. Текст: [LICENSE](https://github.com/nika-sc/Nika-Service-CRM/blob/main/LICENSE)
 
 Автор: **Александр Смелков**, сервисный центр «Ника», Сочи.
 
@@ -42,9 +42,9 @@ cd Nika-Service-CRM
 
 ### 2. Windows (офлайн SETUP)
 
-Для Windows 10/11 x64 доступен автономный установщик **1.0.9** (сборка **2026-09-14**) с PostgreSQL и службой автозапуска.  
-Ссылки: [GitHub release windows-setup-1.0.9](https://github.com/nika-sc/Nika-Service-CRM/releases/tag/windows-setup-1.0.9), зеркало на [главной демо](/#windows-setup).  
-В 1.0.9: на карточке заявки снова добавляются услуги и оплаты. Подробности — [блог 1.0.9](/blog/windows-setup-1-0-9).
+Для Windows 10/11 x64 доступен автономный установщик **1.0.11** (сборка **2026-10-24**) с PostgreSQL и службой автозапуска.  
+Ссылки: [GitHub release windows-setup-1.0.11](https://github.com/nika-sc/Nika-Service-CRM/releases/tag/windows-setup-1.0.11), зеркало на [главной демо](/#windows-setup).  
+В 1.0.11 установка проходит в Windows Sandbox, после входа открывается дашборд, на рабочем столе три ярлыка. Подробности — [блог 1.0.11](/blog/windows-setup-1-0-11).
 
 После установки демо-логины (пароль `111111`): `admin`, `manager`, `master`, `viewer`.
 

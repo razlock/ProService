@@ -696,26 +696,18 @@ class SettingsService:
     
     @staticmethod
     def _get_print_template_impl(template_type: str, branch_id: Optional[int] = None) -> Optional[Dict]:
-        """Чтение шаблона печати из БД без кэша; если есть шаблон филиала — берёт его, иначе общий."""
+        """Чтение шаблона печати; приоритет — шаблон филиала, затем общий."""
         try:
             with get_db_connection(row_factory=sqlite3.Row) as conn:
                 cursor = conn.cursor()
                 if branch_id is not None:
-                    cursor.execute(
-                        "SELECT * FROM print_templates WHERE template_type = ? AND branch_id = ? LIMIT 1",
-                        (template_type, int(branch_id)),
-                    )
+                    cursor.execute("SELECT * FROM print_templates WHERE template_type = ? AND branch_id = ? LIMIT 1", (template_type, int(branch_id)))
                     template = cursor.fetchone()
                     if template:
                         return dict(template)
-                cursor.execute(
-                    "SELECT * FROM print_templates WHERE template_type = ? AND branch_id IS NULL LIMIT 1",
-                    (template_type,),
-                )
+                cursor.execute("SELECT * FROM print_templates WHERE template_type = ? AND branch_id IS NULL LIMIT 1", (template_type,))
                 template = cursor.fetchone()
-                if template:
-                    return dict(template)
-                return None
+                return dict(template) if template else None
         except sqlite3.OperationalError as e:
             logger.warning(f"Ошибка при получении шаблона печати: {e}")
             return None
@@ -732,15 +724,15 @@ class SettingsService:
         Returns:
             Словарь с данными шаблона или None
         """
-        return SettingsService._get_print_template_impl(template_type)
+        return SettingsService._get_print_template_impl(template_type, branch_id)
 
     @staticmethod
     def get_print_template_fresh(template_type: str = 'customer', branch_id: Optional[int] = None) -> Optional[Dict]:
         """
-        Получает шаблон печати из БД без кэша. Если указан branch_id и для филиала есть свой шаблон,
-        возвращает филиальный шаблон, иначе общий.
+        Получает шаблон печати из БД без кэша. Использовать на странице заказа,
+        чтобы всегда подхватывать шаблон из настроек «Формы для печати».
         """
-        return SettingsService._get_print_template_impl(template_type, branch_id)
+        return SettingsService._get_print_template_impl(template_type)
     
     @staticmethod
     def save_print_template(template_type: str, html_content: str, name: Optional[str] = None) -> bool:

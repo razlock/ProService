@@ -332,19 +332,16 @@ def create_app(config_class=Config):
         session.permanent = True
         return None
 
+
     @app.before_request
     def set_branch_context():
-        """Устанавливает текущую точку (филиал) в g.branch_id для фильтрации данных."""
         from flask import g, session
         from flask_login import current_user
         from app.database.connection import get_db_connection
-
         if current_user.is_authenticated and session.get('branch_id'):
             g.branch_id = int(session['branch_id'])
         else:
             g.branch_id = None
-
-        # Загружаем список всех активных точек для переключателя в шапке
         g.all_branches = []
         try:
             with get_db_connection() as conn:
@@ -355,6 +352,7 @@ def create_app(config_class=Config):
             pass
 
     # За nginx/proxy — корректные URL и HTTPS
+
     if not app.debug:
         from werkzeug.middleware.proxy_fix import ProxyFix
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)

@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "error": null,
+  "checked_at": "2026-10-25T17:48:43.603458+00:00",
+  "update_available": false,
+  "latest": {
+    "version": "1.0.11",
+    "build_date": "2026-10-24",
+    "sha256": "E548A135C58D61A02BF815A26E0D357CCC74A205E46BDFC58874A70488AF1652",
+    "filename": "NikaCRM-Offline-Setup-1.0.11-x64.exe",
+    "github_download_url": "https://github.com/nika-sc/Nika-Service-CRM/releases/download/windows-setup-1.0.11/NikaCRM-Offline-Setup-1.0.11-x64.exe",
+    "demo_download_url": "https://service.nika-crm.ru/downloads/NikaCRM-Offline-Setup-1.0.11-x64.exe",
+    "github_release_url": "https://github.com/nika-sc/Nika-Service-CRM/releases/tag/windows-setup-1.0.11",
+    "blog_url": "https://service.nika-crm.ru/blog/windows-setup-1-0-11"
+  }
+}
