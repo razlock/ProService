@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://profi-service73.ru/sitemap.xml
