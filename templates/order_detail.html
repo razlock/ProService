@@ -9,6 +9,57 @@
     <link rel="stylesheet" href="{{ static_url('css/order_detail.css') }}">
     
     <script src="{{ static_url('js/order_detail/copy_clipboard.js') }}"></script>
+    
+    <style>
+        /* Увеличиваем кнопки в шапке заявки для мастеров */
+        #editOrderBtn, .top-action-btns .btn, #toggleCommentsBtn, #hideOrderBtn, #deleteOrderBtn, #reassignAssigneesBtn {
+            font-size: 1.1rem !important;
+            padding: 0.4rem 0.6rem !important;
+            border-radius: 8px !important;
+            height: 40px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        }
+        .top-action-btns .btn i, #editOrderBtn i, #toggleCommentsBtn i, #hideOrderBtn i, #deleteOrderBtn i {
+            font-size: 1.2rem !important;
+        }
+        #toggleCommentsBtn .badge {
+            font-size: 0.9rem !important;
+            padding: 0.4em 0.6em !important;
+            top: -5px !important;
+        }
+        
+        /* I. Кнопка "Приемная квитанция" (зеленая) */
+        .top-action-btns .btn:nth-child(1) {
+            background-color: #10b981 !important;
+            color: white !important;
+            border-color: #10b981 !important;
+        }
+        .top-action-btns .btn:nth-child(1):hover {
+            background-color: #059669 !important;
+        }
+        
+        /* II. Кнопка "Товарный чек" (светло-серая) */
+        .top-action-btns .btn:nth-child(2) {
+            background-color: #f3f4f6 !important;
+            color: #374151 !important;
+        }
+        .top-action-btns .btn:nth-child(2):hover {
+            background-color: #e5e7eb !important;
+        }
+        
+        /* III. Кнопка "Акт выполненных работ" (синяя) */
+        .top-action-btns .btn:nth-child(3) {
+            background-color: #3b82f6 !important;
+            color: white !important;
+            border-color: #3b82f6 !important;
+        }
+        .top-action-btns .btn:nth-child(3):hover {
+            background-color: #2563eb !important;
+        }
+    </style>
 
 {% endblock %}
 
@@ -138,7 +189,7 @@
                             <button id="editOrderBtn" class="btn btn-light btn-sm" type="button" {% if blocks_edit or is_final %}style="background: #ffffff; border: 1px solid #e0e0e0; color: #424242; padding: 0.25rem 0.5rem; font-size: 0.75rem; opacity: 0.5; cursor: not-allowed;" title="Сначала откройте заявку" aria-label="Редактировать заявку" data-blocked="1"{% else %}data-bs-toggle="modal" data-bs-target="#editOrderModal" title="Редактировать заявку" aria-label="Редактировать заявку" style="background: #ffffff; border: 1px solid #e0e0e0; color: #424242; padding: 0.25rem 0.5rem; font-size: 0.75rem;"{% endif %}>
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <div class="btn-group no-print" role="group">
+                            <div class="btn-group no-print top-action-btns" role="group">
                                 <button class="btn btn-light btn-sm" type="button" onclick="printRenderedTemplate('customer');" title="Печать квитанции" aria-label="Печать квитанции" style="background: #ffffff; border: 1px solid #e0e0e0; color: #424242; padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                                     <i class="fas fa-print"></i>
                                 </button>
