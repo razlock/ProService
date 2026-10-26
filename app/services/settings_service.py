@@ -698,34 +698,43 @@ class SettingsService:
     def _get_print_template_impl(template_type: str, branch_id: Optional[int] = None) -> Optional[Dict]:
         """Чтение шаблона печати; приоритет — шаблон филиала, затем общий."""
         try:
-            with get_db_connection(row_factory=sqlite3.Row) as conn:
+            with get_db_connection() as conn:
                 cursor = conn.cursor()
+                
+                # Проверяем шаблон филиала
                 if branch_id is not None:
                     cursor.execute("SELECT * FROM print_templates WHERE template_type = ? AND branch_id = ? LIMIT 1", (template_type, int(branch_id)))
                     template = cursor.fetchone()
                     if template:
-                        return dict(template)
+                        if not isinstance(template, dict):
+                            cols = [d[0] for d in cursor.description]
+                            return dict(zip(cols, template))
+                        return template
+                        
+                # Проверяем общий шаблон
                 cursor.execute("SELECT * FROM print_templates WHERE template_type = ? AND branch_id IS NULL LIMIT 1", (template_type,))
                 template = cursor.fetchone()
-                return dict(template) if template else None
-        except sqlite3.OperationalError as e:
+                if template:
+                    if not isinstance(template, dict):
+                        cols = [d[0] for d in cursor.description]
+                        return dict(zip(cols, template))
+                    return template
+                    
+                return None
+        except Exception as e:
             logger.warning(f"Ошибка при получении шаблона печати: {e}")
             return None
 
     @staticmethod
-    @cache_result(timeout=3600, key_prefix='print_template')  # Кэш на 1 час
-    def get_print_template(template_type: str = 'customer') -> Optional[Dict]:
-        """
-        Получает шаблон печати с кэшированием (для страницы настроек).
-        
-        Args:
-            template_type: Тип шаблона ('customer' или 'master')
-            
-        Returns:
-            Словарь с данными шаблона или None
-        """
+    def get_print_template(template_type: str = 'customer', branch_id: Optional[int] = None) -> Optional[Dict]:
+        """Получает шаблон печати (для страницы настроек)."""
         return SettingsService._get_print_template_impl(template_type, branch_id)
 
+    @staticmethod
+    def get_print_template_fresh(template_type: str = 'customer', branch_id: Optional[int] = None) -> Optional[Dict]:
+        """Получает шаблон печати из БД без кэша (для печати)."""
+        return SettingsService._get_print_template_impl(template_type, branch_id)
+    
     @staticmethod
     def get_print_template_fresh(template_type: str = 'customer', branch_id: Optional[int] = None) -> Optional[Dict]:
         """
