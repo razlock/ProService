@@ -1,17 +1,17 @@
 {
-  "name": "Nika CRM",
-  "short_name": "Nika CRM",
-  "description": "Система управления сервисным центром",
+  "name": "Profi Service",
+  "short_name": "Profi Service",
+  "description": "Система управления сетью сервисных центров Profi Service",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#007bff",
+  "theme_color": "#ff7a1a",
   "orientation": "any",
   "icons": [
     {
-      "src": "/static/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/static/favicon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
