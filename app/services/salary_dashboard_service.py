@@ -2099,6 +2099,7 @@ class SalaryDashboardService:
                   AND (p.is_cancelled = 0 OR p.is_cancelled IS NULL)
                   {status_filter}
                   {date_filter}
+                  AND p.kind != 'adjustment'
                   AND NOT EXISTS (
                       SELECT 1 FROM salary_accruals sa
                       WHERE sa.order_id = p.order_id
