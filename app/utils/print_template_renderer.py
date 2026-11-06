@@ -54,15 +54,10 @@ def render_print_template(
     if not template_html or not isinstance(template_html, str):
         return ""
 
-    # Разворачиваем цикл data-for="ITEMS"
-    data_for_items = re.search(
-        r'<(\w+)[^>]*\s+data-for\s*=\s*["\']ITEMS["\'][^>]*>(.*?)</\1>',
-        template_html,
-        re.IGNORECASE | re.DOTALL,
-    )
-    if data_for_items:
-        tag_name = data_for_items.group(1)
-        row_html = data_for_items.group(2)
+    # Разворачиваем цикл data-for="ITEMS" (обрабатываем ВСЕ вхождения)
+    def _replace_items(match):
+        tag_name = match.group(1)
+        row_html = match.group(2)
         rows = []
         for item_vals in print_items:
             line = row_html
@@ -77,12 +72,14 @@ def render_print_template(
                 )
                 line = line.replace(f"##{key}##", val)
             rows.append(f"<{tag_name}>{line}</{tag_name}>")
-        replacement = "".join(rows)
-        template_html = (
-            template_html[: data_for_items.start()]
-            + replacement
-            + template_html[data_for_items.end() :]
-        )
+        return "".join(rows)
+
+    template_html = re.sub(
+        r'<(\w+)[^>]*\s+data-for\s*=\s*["\']ITEMS["\'][^>]*>(.*?)</\1>',
+        _replace_items,
+        template_html,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
 
     # Рендерим <var-inline data-var="...">...</var-inline>
     def _replace_var_inline(m: re.Match) -> str:
